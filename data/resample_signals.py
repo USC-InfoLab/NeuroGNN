@@ -46,7 +46,7 @@ def resample_all(raw_edf_dir, save_dir):
 
             with h5py.File(save_fn, "w") as hf:
                 hf.create_dataset("resampled_signal", data=signal_array)
-            hf.create_dataset("resample_freq", data=FREQUENCY)
+                hf.create_dataset("resample_freq", data=FREQUENCY)
 
         except BaseException:
             failed_files.append(edf_fn)

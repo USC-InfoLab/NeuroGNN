@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from datetime import datetime
 import pickle
 import torch
 import json
@@ -19,13 +20,14 @@ from model.model import DCRNNModel_nextTimePred
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 from torch.optim.lr_scheduler import CosineAnnealingLR
+from utils import WandbLogger
 
 
 def main(args):
 
     # Get device
     args.cuda = torch.cuda.is_available()
-    device = "cuda" if args.cuda else "cpu"
+    device = "cuda" if args.device == 'cuda' else "cpu"
 
     # Set random seed
     utils.seed_torch(seed=args.rand_seed)
@@ -39,8 +41,11 @@ def main(args):
         json.dump(vars(args), f, indent=4, sort_keys=True)
 
     # Set up logging
+    run_name = f'{args.run_identity}-window:{args.max_seq_len}-horizon:{args.output_seq_len}-{str(datetime.now().strftime("%Y-%m-%d %H:%M"))}'
     log = utils.get_logger(args.save_dir, 'train')
     tbx = SummaryWriter(args.save_dir)
+    wandb_logger = WandbLogger("EEG_Pretrain_Forecast", args.use_wandb, run_name)
+    wandb_logger.log_hyperparams(args)
     log.info('Args: {}'.format(dumps(vars(args), indent=4, sort_keys=True)))
 
     # Build dataset
@@ -66,6 +71,7 @@ def main(args):
     # Build model
     log.info('Building model...')
     model = DCRNNModel_nextTimePred(device=device, args=args)
+    wandb_logger.watch_model(model)
 
     num_params = utils.count_parameters(model)
     log.info('Total number of trainable parameters: {}'.format(num_params))
@@ -77,7 +83,7 @@ def main(args):
 
     if args.do_train:
         train(model, dataloaders, args, device, args.save_dir, log, tbx,
-              scaler=scaler)
+              scaler=scaler, wandb_logger=wandb_logger)
         # Load best model after training finished
         best_path = os.path.join(args.save_dir, 'best.pth.tar')
         model = utils.load_model_checkpoint(best_path, model)
@@ -106,7 +112,8 @@ def train(
         save_dir,
         log,
         tbx,
-        scaler=None):
+        scaler=None,
+        wandb_logger=None):
     """
     Perform training and evaluate on dev set
     """
@@ -187,6 +194,8 @@ def train(
                 tbx.add_scalar('train/LR',
                                optimizer.param_groups[0]['lr'],
                                step)
+                wandb_logger.log('train/MAE Loss', loss_val, step)
+                wandb_logger.log('train/LR', optimizer.param_groups[0]['lr'], step)
 
             if epoch % args.eval_every == 0:
                 # Evaluate and save checkpoint
@@ -225,6 +234,7 @@ def train(
                 log.info('Visualizing in TensorBoard...')
                 tbx.add_scalar(
                     'eval/{}'.format('MAE Loss'), eval_loss, step)
+                wandb_logger.log('eval/{}'.format('MAE Loss'), eval_loss, step)
 
         # step lr scheduler
         scheduler.step()

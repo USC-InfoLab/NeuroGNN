@@ -1,0 +1,169 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.13.5
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: true
+    python_version: 3.10.8
+    start_time: 1685420777.426994
+    t:
+      1:
+      - 1
+      - 5
+      - 53
+      - 55
+      2:
+      - 1
+      - 5
+      - 53
+      - 55
+      3:
+      - 1
+      - 13
+      - 23
+      4: 3.10.8
+      5: 0.13.5
+      8:
+      - 2
+      - 5
+cl_decay_steps:
+  desc: null
+  value: 3000
+cuda:
+  desc: null
+  value: true
+data_augment:
+  desc: null
+  value: true
+dcgru_activation:
+  desc: null
+  value: tanh
+device:
+  desc: null
+  value: cuda
+do_train:
+  desc: null
+  value: true
+dropout:
+  desc: null
+  value: 0.0
+eval_every:
+  desc: null
+  value: 1
+filter_type:
+  desc: null
+  value: laplacian
+fine_tune:
+  desc: null
+  value: false
+graph_type:
+  desc: null
+  value: combined
+input_dim:
+  desc: null
+  value: 100
+input_dir:
+  desc: null
+  value: /storage/datasets_public/eeg_tuh_seizure/Resampled_TUH_SZ_v1.5.2
+l2_wd:
+  desc: null
+  value: 0.0005
+load_model_path:
+  desc: null
+  value: null
+lr_init:
+  desc: null
+  value: 0.0005
+max_diffusion_step:
+  desc: null
+  value: 2
+max_grad_norm:
+  desc: null
+  value: 5.0
+max_seq_len:
+  desc: null
+  value: 60
+maximize_metric:
+  desc: null
+  value: false
+metric_avg:
+  desc: null
+  value: weighted
+metric_name:
+  desc: null
+  value: loss
+model_name:
+  desc: null
+  value: dcrnn
+num_classes:
+  desc: null
+  value: 1
+num_epochs:
+  desc: null
+  value: 350
+num_nodes:
+  desc: null
+  value: 19
+num_rnn_layers:
+  desc: null
+  value: 3
+num_workers:
+  desc: null
+  value: 8
+output_dim:
+  desc: null
+  value: 100
+output_seq_len:
+  desc: null
+  value: 12
+patience:
+  desc: null
+  value: 5
+preproc_dir:
+  desc: null
+  value: /storage/datasets_public/eeg_tuh_seizure/Preprocessed_TUH_SZ_v1.5.2/seizure_detection_clip_60/clipLen60_timeStepSize1
+pretrained_num_rnn_layers:
+  desc: null
+  value: 3
+rand_seed:
+  desc: null
+  value: 123
+raw_data_dir:
+  desc: null
+  value: /storage/datasets_public/eeg_tuh_seizure/TUH_SZ_v1.5.2
+rnn_units:
+  desc: null
+  value: 64
+run_identity:
+  desc: null
+  value: DCRNN
+save_dir:
+  desc: null
+  value: /home/users/arash/W4H/eeg/saved_results/pretrained_eeg_ssl/train/train-22
+task:
+  desc: null
+  value: SS pre-training
+test_batch_size:
+  desc: null
+  value: 128
+time_step_size:
+  desc: null
+  value: 1
+top_k:
+  desc: null
+  value: 3
+train_batch_size:
+  desc: null
+  value: 40
+use_curriculum_learning:
+  desc: null
+  value: false
+use_fft:
+  desc: null
+  value: true
+use_wandb:
+  desc: null
+  value: true
