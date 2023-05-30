@@ -1,5 +1,10 @@
 import sys
-sys.path.append('../')
+import os
+import inspect
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir) 
 import pyedflib
 import utils
 from data.data_utils import *
@@ -10,7 +15,6 @@ import torch
 import math
 import h5py
 import numpy as np
-import os
 import pickle
 import scipy
 import scipy.signal

@@ -1,5 +1,6 @@
 import os
 import sys
+sys.path.append('../')
 import argparse
 import h5py
 from tqdm import tqdm

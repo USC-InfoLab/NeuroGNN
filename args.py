@@ -175,6 +175,10 @@ def get_args():
                         type=int,
                         default=100,
                         help='Number of epochs for training.')
+    parser.add_argument('--device',
+                        type=str,
+                        default='cpu',
+                        help='Which device to use (CUDA or CPU).')
     parser.add_argument('--max_grad_norm',
                         type=float,
                         default=5.0,
@@ -187,6 +191,14 @@ def get_args():
                         default=False,
                         action='store_true',
                         help='Whether perform data augmentation.')
+    parser.add_argument('--use_wandb',
+                        default=False,
+                        action='store_true',
+                        help='Whether use wandb to log results.')
+    parser.add_argument('--run_identity', 
+                        type=str, 
+                        default='DCRNN')
+
     parser.add_argument(
         '--patience',
         type=int,

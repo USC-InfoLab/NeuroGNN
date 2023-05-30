@@ -33,10 +33,45 @@ import os
 import sys
 import pickle
 import scipy.sparse as sp
+import wandb
 
 MASK = 0.
 LARGE_NUM = 1e9
 
+
+class WandbLogger():
+    def __init__(self, project, is_used, name=None):
+
+        self.is_used = is_used
+        if is_used and not name:
+            wandb.init(project=project)
+        elif is_used and name:
+            wandb.init(project=project, name=name)
+
+    def watch_model(self,model):
+        if self.is_used:
+            wandb.watch(model)
+
+    def log_hyperparams(self, params):
+        if self.is_used:
+            wandb.config.update(params)
+
+    def log_metrics(self, metrics):
+        if self.is_used:
+            wandb.log(metrics)
+
+    def log(self, key, value,  round_idx):
+        if self.is_used:
+            wandb.log({key: value, "Round": round_idx})
+
+    def log_str(self, key, value):
+        if self.is_used:
+            wandb.log({key: value})
+
+
+    def save_file(self, path):
+        if path is not None and os.path.exists(path) and self.is_used:
+            wandb.save(path)
 
 @contextmanager
 def timer(name="Main", logger=None):
