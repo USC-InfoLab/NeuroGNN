@@ -201,6 +201,9 @@ def main(args):
                             eval_set='test',
                             best_thresh=dev_results['best_thresh'])
 
+    for k, v in test_results.items():
+        wandb_logger.log('test/{}'.format(k), v)
+
     # Log to console
     test_results_str = ', '.join('{}: {:.3f}'.format(k, v)
                                  for k, v in test_results.items())

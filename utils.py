@@ -604,9 +604,9 @@ def get_semantic_embeds():
     for node, descp in electrodes_descriptions.items():
         descp = f'This node represents electrode {node.split()[1]} recordings. {descp}'
         descriptions.append(descp)
-    # for node, descp in cortex_regions_descriptions.items():
-    #     descp = f'This is a meta-node that represents the recordings for {node} region of the cortext. {descp}'
-    #     descriptions.append(descp)
+    for node, descp in cortex_regions_descriptions.items():
+        descp = f'This is a meta-node that represents the recordings for {node} region of the cortext. {descp}'
+        descriptions.append(descp)
 
     embeddings = llm.encode(descriptions)
     return embeddings
