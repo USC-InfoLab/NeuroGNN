@@ -149,7 +149,8 @@ class SeizureDataset(Dataset):
             sampling_ratio=1,
             seed=123,
             use_fft=False,
-            preproc_dir=None):
+            preproc_dir=None,
+            augment_meta_series=False):
         """
         Args:
             input_dir: dir to resampled signals h5 files
@@ -188,6 +189,7 @@ class SeizureDataset(Dataset):
         self.filter_type = filter_type
         self.use_fft = use_fft
         self.preproc_dir = preproc_dir
+        self.augment_meta_series = augment_meta_series
 
         # get full paths to all raw edf files
         self.edf_files = []
@@ -400,7 +402,8 @@ class SeizureDataset(Dataset):
         # (max_seq_len, num_nodes, input_dim)
         x = torch.FloatTensor(curr_feature)
         # TODO: Adding meta-nodes series. Is this a good way?
-        x = augment_meta_series(x, META_NODE_INDICES)
+        if self.augment_meta_series:
+            x = augment_meta_series(x, META_NODE_INDICES)
         y = torch.FloatTensor([seizure_label])
         seq_len = torch.LongTensor([self.max_seq_len])
         writeout_fn = h5_fn.split('.h5')[0]
@@ -454,7 +457,8 @@ def load_dataset_detection(
         use_fft=False,
         sampling_ratio=1,
         seed=123,
-        preproc_dir=None):
+        preproc_dir=None,
+        augment_meta_series=False):
     """
     Args:
         input_dir: dir to preprocessed h5 file
@@ -527,7 +531,8 @@ def load_dataset_detection(
                                  sampling_ratio=sampling_ratio,
                                  seed=seed,
                                  use_fft=use_fft,
-                                 preproc_dir=preproc_dir)
+                                 preproc_dir=preproc_dir,
+                                 augment_meta_series=augment_meta_series)
 
         if split == 'train':
             shuffle = True
