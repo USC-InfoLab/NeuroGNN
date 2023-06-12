@@ -11,7 +11,7 @@ import math
 import torch
 from torch.utils.data import Dataset, DataLoader
 from utils import StandardScaler
-from constants import INCLUDED_CHANNELS, FREQUENCY
+from constants import INCLUDED_CHANNELS, FREQUENCY, META_NODE_INDICES
 from data.data_utils import *
 import utils
 import pyedflib
@@ -348,6 +348,8 @@ class SeizureDataset(Dataset):
         # convert to tensors
         # (max_seq_len, num_nodes, input_dim)
         x = torch.FloatTensor(padded_feature)
+        # TODO: Adding meta-nodes series. Is this a good way?
+        x = augment_meta_series(x, META_NODE_INDICES)
         y = torch.LongTensor([seizure_class])
         seq_len = torch.LongTensor([seq_len])
         writeout_fn = edf_fn + "_" + str(seizure_idx)
@@ -367,6 +369,22 @@ class SeizureDataset(Dataset):
             indiv_adj_mat = []
 
         return (x, y, seq_len, indiv_supports, indiv_adj_mat, writeout_fn)
+
+
+def augment_meta_series(x, meta_node_indices):
+    """
+    Args:
+        x: (max_seq_len, num_nodes, input_dim)
+        meta_node_indices: list of indices of meta nodes
+    Returns:
+        x: (max_seq_len, num_nodes + len(meta_node_indices), input_dim)
+    """
+    for index_list in meta_node_indices:
+        node_series_list = x[:, index_list, :]  # Extract the series for the current node from x
+        meta_series = node_series_list.mean(axis=1, keepdims=True)  # Take the mean of the series
+        x = torch.cat([x, meta_series], axis=1)
+    return x
+
 
 
 def load_dataset_classification(
