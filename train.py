@@ -21,6 +21,7 @@ from model.model import DCRNNModel_classification, DCRNNModel_nextTimePred
 from model.densecnn import DenseCNN
 from model.lstm import LSTMModel
 from model.cnnlstm import CNN_LSTM
+from model.model import NeuroGNN_Classification
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 from dotted_dict import DottedDict
@@ -48,7 +49,7 @@ def main(args):
         json.dump(vars(args), f, indent=4, sort_keys=True)
 
     # Set up logger
-    run_name = f'{args.run_identity}-window:{args.max_seq_len}-horizon:{args.output_seq_len}-{str(datetime.now().strftime("%Y-%m-%d %H:%M"))}'
+    run_name = f'{args.model_name}-window:{args.max_seq_len}-horizon:{args.output_seq_len}-{str(datetime.now().strftime("%Y-%m-%d %H:%M"))}'
     log = utils.get_logger(args.save_dir, 'train')
     tbx = SummaryWriter(args.save_dir)
     wandb_logger = WandbLogger(f"EEG_{args.task}", args.use_wandb, run_name)
@@ -118,6 +119,10 @@ def main(args):
     if args.model_name == "dcrnn":
         model = DCRNNModel_classification(
             args=args, num_classes=args.num_classes, device=device)
+    elif args.model_name == "neurognn":
+        dist_adj = pickle.load(open('./data/electrode_graph/adj_mx_3d.pkl', "rb"))
+        initial_sem_embs = utils.get_semantic_embeds()
+        model = NeuroGNN_Classification(args, args.num_classes, device, dist_adj[2], initial_sem_embs)
     elif args.model_name == "densecnn":
         with open("./model/dense_inception/params.json", "r") as f:
             params = json.load(f)
@@ -269,6 +274,8 @@ def train(model, dataloaders, args, device, save_dir, log, tbx, wandb_logger=Non
                     logits = model(x)
                 elif args.model_name == "lstm" or args.model_name == "cnnlstm":
                     logits = model(x, seq_lengths)
+                elif args.model_name == "neurognn":
+                    logits = model(x)
                 else:
                     raise NotImplementedError
                 if logits.shape[-1] == 1:
@@ -383,6 +390,8 @@ def evaluate(
                 logits = model(x)
             elif args.model_name == "lstm" or args.model_name == "cnnlstm":
                 logits = model(x, seq_lengths)
+            elif args.model_name == "neurognn":
+                logits = model(x)
             else:
                 raise NotImplementedError
 
