@@ -55,6 +55,8 @@ def main(args):
     wandb_logger = WandbLogger(f"EEG_{args.task}", args.use_wandb, run_name)
     wandb_logger.log_hyperparams(args)
     log.info('Args: {}'.format(dumps(vars(args), indent=4, sort_keys=True)))
+    
+    augment_metaseries = True if args.model_name == 'neurognn' else False
 
     # Build dataset
     log.info('Building dataset...')
@@ -76,7 +78,8 @@ def main(args):
             use_fft=args.use_fft,
             sampling_ratio=1,
             seed=123,
-            preproc_dir=args.preproc_dir)
+            preproc_dir=args.preproc_dir,
+            augment_metaseries=augment_metaseries)
     elif args.task == 'classification':
         if args.model_name != 'densecnn':
             dataloaders, _, scaler = load_dataset_classification(
@@ -95,7 +98,8 @@ def main(args):
                 top_k=args.top_k,
                 filter_type=args.filter_type,
                 use_fft=args.use_fft,
-                preproc_dir=args.preproc_dir)
+                preproc_dir=args.preproc_dir,
+                augment_metaseries=augment_metaseries)
         else:
             print("Using densecnn dataloader!")
             dataloaders, _, scaler = load_dataset_densecnn_classification(
@@ -201,13 +205,13 @@ def main(args):
                             eval_set='test',
                             best_thresh=dev_results['best_thresh'])
 
-    for k, v in test_results.items():
-        wandb_logger.log('test/{}'.format(k), v)
 
     # Log to console
     test_results_str = ', '.join('{}: {:.3f}'.format(k, v)
                                  for k, v in test_results.items())
     log.info('TEST set prediction results: {}'.format(test_results_str))
+    for k, v in test_results.items():
+        wandb_logger.log('test/{}'.format(k), v, 0)
 
 
 def train(model, dataloaders, args, device, save_dir, log, tbx, wandb_logger=None):

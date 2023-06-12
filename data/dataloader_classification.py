@@ -16,8 +16,8 @@ from data.data_utils import *
 import utils
 import pyedflib
 
-repo_paths = str(Path.cwd()).split('eeg-gnn-ssl')
-repo_paths = Path(repo_paths[0]).joinpath('eeg-gnn-ssl')
+repo_paths = str(Path.cwd()).split('NeuroGNN')
+repo_paths = Path(repo_paths[0]).joinpath('NeuroGNN')
 sys.path.append(repo_paths)
 FILEMARKER_DIR = Path(repo_paths).joinpath('data/file_markers_classification')
 
@@ -102,7 +102,8 @@ class SeizureDataset(Dataset):
             top_k=None,
             filter_type='laplacian',
             use_fft=False,
-            preproc_dir=None):
+            preproc_dir=None,
+            augment_meta_series=False):
         """
         Args:
             input_dir: dir to resampled signals h5 files
@@ -141,6 +142,8 @@ class SeizureDataset(Dataset):
         self.filter_type = filter_type
         self.use_fft = use_fft
         self.preproc_dir = preproc_dir
+        
+        self.augment_meta_series = augment_meta_series
 
         # get full paths to all raw edf files
         self.edf_files = []
@@ -349,7 +352,8 @@ class SeizureDataset(Dataset):
         # (max_seq_len, num_nodes, input_dim)
         x = torch.FloatTensor(padded_feature)
         # TODO: Adding meta-nodes series. Is this a good way?
-        x = augment_meta_series(x, META_NODE_INDICES)
+        if self.augment_meta_series:
+            x = augment_meta_series(x, META_NODE_INDICES)
         y = torch.LongTensor([seizure_class])
         seq_len = torch.LongTensor([seq_len])
         writeout_fn = edf_fn + "_" + str(seizure_idx)
@@ -403,7 +407,8 @@ def load_dataset_classification(
         top_k=None,
         filter_type='laplacian',
         use_fft=False,
-        preproc_dir=None):
+        preproc_dir=None,
+        augment_meta_series=False):
     """
     Args:
         input_dir: dir to resampled signals h5 files
@@ -468,7 +473,8 @@ def load_dataset_classification(
                                  top_k=top_k,
                                  filter_type=filter_type,
                                  use_fft=use_fft,
-                                 preproc_dir=preproc_dir)
+                                 preproc_dir=preproc_dir,
+                                 augment_meta_series=augment_meta_series)
 
         if split == 'train':
             shuffle = True
