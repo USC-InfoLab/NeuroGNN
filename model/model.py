@@ -368,8 +368,8 @@ class DCRNNModel_nextTimePred(nn.Module):
 ########## NeuroGNN Classes ##########
 
 class NeuroGNN_Encoder(nn.Module):
-    def __init__(self, input_dim, seq_length, nodes_num=19,
-                 semantic_embs=None, semantic_embs_dim=168,
+    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=6,
+                 semantic_embs=None, semantic_embs_dim=128,
                  dropout_rate=0.5, leaky_rate=0.2,
                  device='cpu', gru_dim=128, num_heads=8,
                  conv_hidden_dim=128, conv_num_layers=3,
@@ -383,6 +383,7 @@ class NeuroGNN_Encoder(nn.Module):
         self.input_dim = input_dim
         self.seq_length = seq_length
         self.nodes_num = nodes_num
+        self.meta_nodes_num = meta_nodes_num
         self.seq1 = nn.Sequential(
             nn.Linear(input_dim, 64),
             nn.ReLU(),
@@ -395,7 +396,7 @@ class NeuroGNN_Encoder(nn.Module):
         self.mhead_attention = nn.MultiheadAttention(self.gru_dim, num_heads, dropout_rate, device=device, batch_first=True)
         
         self.GRU_cells = nn.ModuleList(
-            nn.GRU(128, gru_dim, batch_first=True) for _ in range(self.nodes_num)
+            nn.GRU(128, gru_dim, batch_first=True) for _ in range(self.nodes_num+self.meta_nodes_num)
         )
         
         # self.fc_ta = nn.Linear(gru_dim, self.time_step) #TODO remove this
@@ -434,10 +435,10 @@ class NeuroGNN_Encoder(nn.Module):
             nn.ReLU()
         )
 
-        if dist_adj is None:
-            self.dist_adj = torch.ones((self.nodes_num, self.nodes_num)).to(device).float()
-        else:
-            self.dist_adj = torch.from_numpy(dist_adj).to(device).float()
+        self.dist_adj = np.ones((nodes_num+meta_nodes_num, nodes_num+meta_nodes_num))
+        if dist_adj is not None:
+            self.dist_adj[:nodes_num, :nodes_num] = dist_adj
+            self.dist_adj = torch.from_numpy(self.dist_adj).to(device).float()
         
         self.att_alpha = nn.Parameter(torch.tensor(0.5), requires_grad=True)
 
