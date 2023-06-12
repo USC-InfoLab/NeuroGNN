@@ -20,8 +20,8 @@ import scipy
 import scipy.signal
 from pathlib import Path
 
-repo_paths = str(Path.cwd()).split('eeg-gnn-ssl')
-repo_paths = Path(repo_paths[0]).joinpath('eeg-gnn-ssl')
+repo_paths = str(Path.cwd()).split('NeuroGNN')
+repo_paths = Path(repo_paths[0]).joinpath('NeuroGNN')
 sys.path.append(repo_paths)
 FILEMARKER_DIR = Path(repo_paths).joinpath('data/file_markers_detection')
 

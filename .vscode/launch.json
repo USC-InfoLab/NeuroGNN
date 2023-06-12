@@ -27,6 +27,20 @@
                     "--rnn_units", "64", "--max_diffusion_step", "2", "--data_augment", "--device", "cuda"]
         },
         {
+            "name": "seizure-detection",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["--input_dir", "/storage/datasets_public/eeg_tuh_seizure/Resampled_TUH_SZ_v1.5.2", "--raw_data_dir", 
+                    "/storage/datasets_public/eeg_tuh_seizure/TUH_SZ_v1.5.2", "--save_dir", "/home/users/arash/W4H/eeg/saved_results/seizure_detection_clip_60",
+                    "--graph_type", "combined", "--max_seq_len", "60", "--do_train", "--num_epochs", "100", "--task", "detection",
+                    "--metric_name", "auroc", "--use_fft", "--lr_init", "1e-4", "--num_rnn_layers", "2", "--rnn_units", "64", 
+                    "--max_diffusion_step", "2", "--num_classes", "1", "--data_augment", "--device", "cuda",
+                    "--preproc_dir", "/storage/datasets_public/eeg_tuh_seizure/Preprocessed_TUH_SZ_v1.5.2/seizure_detection_clip_60/clipLen60_timeStepSize1"]
+        },
+        {
             "name": "Pre-training-saved-preproc",
             "type": "python",
             "request": "launch",
