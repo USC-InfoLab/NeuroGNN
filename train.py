@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import pickle
+from datetime import datetime
 import torch
 import json
 import torch.nn as nn
@@ -25,6 +26,8 @@ from tqdm import tqdm
 from dotted_dict import DottedDict
 from torch.optim.lr_scheduler import CosineAnnealingLR
 import copy
+from utils import WandbLogger
+
 
 
 def main(args):
@@ -45,8 +48,11 @@ def main(args):
         json.dump(vars(args), f, indent=4, sort_keys=True)
 
     # Set up logger
+    run_name = f'{args.run_identity}-window:{args.max_seq_len}-horizon:{args.output_seq_len}-{str(datetime.now().strftime("%Y-%m-%d %H:%M"))}'
     log = utils.get_logger(args.save_dir, 'train')
     tbx = SummaryWriter(args.save_dir)
+    wandb_logger = WandbLogger(f"EEG_{args.task}", args.use_wandb, run_name)
+    wandb_logger.log_hyperparams(args)
     log.info('Args: {}'.format(dumps(vars(args), indent=4, sort_keys=True)))
 
     # Build dataset
@@ -124,8 +130,10 @@ def main(args):
         model = CNN_LSTM(args.num_classes)
     else:
         raise NotImplementedError
+    
 
     if args.do_train:
+        wandb_logger.watch_model(model)
         if not args.fine_tune:
             if args.load_model_path is not None:
                 model = utils.load_model_checkpoint(
@@ -156,7 +164,7 @@ def main(args):
         model = model.to(device)
 
         # Train
-        train(model, dataloaders, args, device, args.save_dir, log, tbx)
+        train(model, dataloaders, args, device, args.save_dir, log, tbx, wandb_logger=wandb_logger)
 
         # Load best model after training finished
         best_path = os.path.join(args.save_dir, 'best.pth.tar')
@@ -194,7 +202,7 @@ def main(args):
     log.info('TEST set prediction results: {}'.format(test_results_str))
 
 
-def train(model, dataloaders, args, device, save_dir, log, tbx):
+def train(model, dataloaders, args, device, save_dir, log, tbx, wandb_logger=None):
     """
     Perform training and evaluate on val set
     """
@@ -285,6 +293,8 @@ def train(model, dataloaders, args, device, save_dir, log, tbx):
                 tbx.add_scalar('train/LR',
                                optimizer.param_groups[0]['lr'],
                                step)
+                wandb_logger.log('train/Loss', loss_val, step)
+                wandb_logger.log('train/LR', optimizer.param_groups[0]['lr'], step)
 
             if epoch % args.eval_every == 0:
                 # Evaluate and save checkpoint
@@ -324,6 +334,7 @@ def train(model, dataloaders, args, device, save_dir, log, tbx):
                 log.info('Visualizing in TensorBoard...')
                 for k, v in eval_results.items():
                     tbx.add_scalar('eval/{}'.format(k), v, step)
+                    wandb_logger.log('eval/{}'.format(k), v, step)
 
         # Step lr scheduler
         scheduler.step()
