@@ -8,7 +8,7 @@ sys.path.append(parentdir)
 import pyedflib
 import utils
 from data.data_utils import *
-from constants import INCLUDED_CHANNELS, FREQUENCY
+from constants import INCLUDED_CHANNELS, FREQUENCY, META_NODE_INDICES
 from utils import StandardScaler
 from torch.utils.data import Dataset, DataLoader
 import torch
@@ -399,6 +399,8 @@ class SeizureDataset(Dataset):
         # convert to tensors
         # (max_seq_len, num_nodes, input_dim)
         x = torch.FloatTensor(curr_feature)
+        # TODO: Adding meta-nodes series. Is this a good way?
+        x = augment_meta_series(x, META_NODE_INDICES)
         y = torch.FloatTensor([seizure_label])
         seq_len = torch.LongTensor([self.max_seq_len])
         writeout_fn = h5_fn.split('.h5')[0]
@@ -418,6 +420,21 @@ class SeizureDataset(Dataset):
             indiv_adj_mat = []
 
         return (x, y, seq_len, indiv_supports, indiv_adj_mat, writeout_fn)
+    
+
+def augment_meta_series(x, meta_node_indices):
+    """
+    Args:
+        x: (max_seq_len, num_nodes, input_dim)
+        meta_node_indices: list of indices of meta nodes
+    Returns:
+        x: (max_seq_len, num_nodes + len(meta_node_indices), input_dim)
+    """
+    for index_list in meta_node_indices:
+        node_series_list = x[:, index_list, :]  # Extract the series for the current node from x
+        meta_series = node_series_list.mean(axis=1, keepdims=True)  # Take the mean of the series
+        x = torch.cat([x, meta_series], axis=1)
+    return x
 
 
 def load_dataset_detection(
