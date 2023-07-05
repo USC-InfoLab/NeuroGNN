@@ -29,11 +29,19 @@ ALL_LABEL_DICT = {'fnsz': 0, 'gnsz': 1, 'spsz': 2, 'cpsz': 3,
 
 
 # Regions of the brain
+# CORTEX_REGIONS = [
+#     'Frontal Lobe',
+#     'Parietal Lobe',
+#     'Left Temporal Lobe',
+#     'Right Temporal Lobe',
+#     'Occipital Lobe',
+#     'Central Region'
+# ]
+
 CORTEX_REGIONS = [
     'Frontal Lobe',
     'Parietal Lobe',
-    'Left Temporal Lobe',
-    'Right Temporal Lobe',
+    'Temporal Lobe',
     'Occipital Lobe',
     'Central Region'
 ]
@@ -94,17 +102,47 @@ ELECTRODES_DESCRIPTIONS = {
 #     'Central Region': "The central region encompasses the sensorimotor cortex, which is responsible for motor control and somatosensory processing. It plays a critical role in planning and executing voluntary movements. The central region receives sensory information related to touch, pressure, pain, and temperature, providing us with a sense of our body's position, movement, and interaction with the environment. This region is involved in the coordination and modulation of movements, integrating sensory feedback with motor commands to ensure smooth and precise execution of actions. The central region helps us manipulate objects, perform complex motor tasks, and engage in activities requiring fine motor control. EEG electrodes associated with the central region include C3, C4, CZ, and sometimes F3 and F4."
 # }
 
+# CORTEX_REGIONS_DESCRIPTIONS = {
+#     'Frontal Lobe': 'Higher cognitive functions, executive functions, motor control, personality',
+#     'Parietal Lobe': 'Sensory perception, spatial awareness, spatial cognition, movement coordination',
+#     'Left Temporal Lobe': 'Auditory processing, language comprehension, memory formation',
+#     'Right Temporal Lobe': 'Auditory processing, non-verbal auditory information, visual-spatial processing',
+#     'Occipital Lobe': 'Visual processing, object recognition, color perception, motion detection',
+#     'Central Region': 'Motor control, somatosensory processing, motor coordination, fine motor control',
+# }
+
 CORTEX_REGIONS_DESCRIPTIONS = {
     'Frontal Lobe': 'Higher cognitive functions, executive functions, motor control, personality',
     'Parietal Lobe': 'Sensory perception, spatial awareness, spatial cognition, movement coordination',
-    'Left Temporal Lobe': 'Auditory processing, language comprehension, memory formation',
-    'Right Temporal Lobe': 'Auditory processing, non-verbal auditory information, visual-spatial processing',
+    'Temporal Lobe': 'Auditory processing, language comprehension, non-verbal auditory information, visual-spatial processing, and memory formation',
     'Occipital Lobe': 'Visual processing, object recognition, color perception, motion detection',
     'Central Region': 'Motor control, somatosensory processing, motor coordination, fine motor control',
 }
 
 
 # Dictionary mapping brain regions to eeg electrodes
+# ELECTRODES_REGIONS = {
+#     'EEG FP1': 'Frontal Lobe',
+#     'EEG FP2': 'Frontal Lobe',
+#     'EEG F3': 'Frontal Lobe',
+#     'EEG F4': 'Frontal Lobe',
+#     'EEG C3': 'Central Region',
+#     'EEG C4': 'Central Region',
+#     'EEG P3': 'Parietal Lobe',
+#     'EEG P4': 'Parietal Lobe',
+#     'EEG O1': 'Occipital Lobe',
+#     'EEG O2': 'Occipital Lobe',
+#     'EEG F7': 'Frontal Lobe',
+#     'EEG F8': 'Frontal Lobe',
+#     'EEG T3': 'Left Temporal Lobe',
+#     'EEG T4': 'Right Temporal Lobe',
+#     'EEG T5': 'Left Temporal Lobe',
+#     'EEG T6': 'Right Temporal Lobe',
+#     'EEG FZ': 'Frontal Lobe',
+#     'EEG CZ': 'Central Region',
+#     'EEG PZ': 'Parietal Lobe'
+# }
+
 ELECTRODES_REGIONS = {
     'EEG FP1': 'Frontal Lobe',
     'EEG FP2': 'Frontal Lobe',
@@ -118,10 +156,10 @@ ELECTRODES_REGIONS = {
     'EEG O2': 'Occipital Lobe',
     'EEG F7': 'Frontal Lobe',
     'EEG F8': 'Frontal Lobe',
-    'EEG T3': 'Left Temporal Lobe',
-    'EEG T4': 'Right Temporal Lobe',
-    'EEG T5': 'Left Temporal Lobe',
-    'EEG T6': 'Right Temporal Lobe',
+    'EEG T3': 'Temporal Lobe',
+    'EEG T4': 'Temporal Lobe',
+    'EEG T5': 'Temporal Lobe',
+    'EEG T6': 'Temporal Lobe',
     'EEG FZ': 'Frontal Lobe',
     'EEG CZ': 'Central Region',
     'EEG PZ': 'Parietal Lobe'
