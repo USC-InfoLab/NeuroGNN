@@ -11,7 +11,7 @@ import math
 import torch
 from torch.utils.data import Dataset, DataLoader
 from utils import StandardScaler
-from constants import INCLUDED_CHANNELS, FREQUENCY
+from constants import INCLUDED_CHANNELS, FREQUENCY, META_NODE_INDICES
 from data.data_utils import *
 import utils
 import pyedflib
@@ -91,7 +91,8 @@ class SeizureDataset(Dataset):
             top_k=None,
             filter_type='laplacian',
             use_fft=False,
-            preproc_dir=None):
+            preproc_dir=None,
+            augment_metaseries=False):
         """
         Args:
             input_dir: dir to resampled signals h5 files
@@ -109,6 +110,7 @@ class SeizureDataset(Dataset):
             filter_type: 'laplacian' for distance graph, 'dual_random_walk' for correlation graph
             use_fft: whether perform Fourier transform
             preproc_dir: dir to preprocessed Fourier transformed data, optional 
+            augment_metaseries: whether to augment with metaseries        
         """
         if standardize and (scaler is None):
             raise ValueError('To standardize, please provide scaler.')
@@ -130,6 +132,8 @@ class SeizureDataset(Dataset):
         self.filter_type = filter_type
         self.use_fft = use_fft
         self.preproc_dir = preproc_dir
+        
+        self.augment_metaseries = augment_metaseries
 
         # get full paths to all raw edf files
         self.edf_files = []
@@ -338,7 +342,13 @@ class SeizureDataset(Dataset):
         # convert to tensors
         # (max_seq_len, num_nodes, input_dim)
         x = torch.FloatTensor(x_feature)
+        # TODO: Adding meta-nodes series. Is this a good way?
+        if self.augment_metaseries:
+            x = augment_data(x, META_NODE_INDICES)
         y = torch.FloatTensor(y_feature[:self.output_len,:,:])
+        # TODO: Adding meta-nodes series. Is this a good way?
+        if self.augment_metaseries:
+            y = augment_data(y, META_NODE_INDICES)
         assert x.shape[0] == self.input_len
         assert y.shape[0] == self.output_len
         seq_len = torch.LongTensor([self.input_len])
@@ -361,6 +371,21 @@ class SeizureDataset(Dataset):
         return (x, y, seq_len, indiv_supports, indiv_adj_mat, writeout_fn)
 
 
+def augment_data(x, meta_node_indices):
+    """
+    Args:
+        x: (max_seq_len, num_nodes, input_dim)
+        meta_node_indices: list of indices of meta nodes
+    Returns:
+        x: (max_seq_len, num_nodes + len(meta_node_indices), input_dim)
+    """
+    for index_list in meta_node_indices:
+        node_series_list = x[:, index_list, :]  # Extract the series for the current node from x
+        meta_series = node_series_list.mean(axis=1, keepdims=True)  # Take the mean of the series
+        x = torch.cat([x, meta_series], axis=1)
+    return x
+
+
 def load_dataset_ssl(
         input_dir,
         raw_data_dir,
@@ -377,7 +402,8 @@ def load_dataset_ssl(
         top_k=None,
         filter_type='laplacian',
         use_fft=False,
-        preproc_dir=None):
+        preproc_dir=None,
+        augment_metaseries=False):
     """
     Args:
         input_dir: dir to resampled signals h5 file
@@ -396,6 +422,7 @@ def load_dataset_ssl(
         filter_type: 'laplacian' for distance graph, 'dual_random_walk' for correlation graph
         use_fft: whether perform Fourier transform
         preproc_dir: dir to preprocessed Fourier transformed data, optional
+        augment_metaseries: whether to augment the data with meta-series, optional
     Returns:
         dataloaders: dictionary of train/dev/test dataloaders
         datasets: dictionary of train/dev/test datasets
@@ -442,7 +469,8 @@ def load_dataset_ssl(
                                  top_k=top_k,
                                  filter_type=filter_type,
                                  use_fft=use_fft,
-                                 preproc_dir=preproc_dir)
+                                 preproc_dir=preproc_dir,
+                                 augment_metaseries=augment_metaseries)
 
         if split == 'train':
             shuffle = True

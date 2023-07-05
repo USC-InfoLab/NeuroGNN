@@ -17,6 +17,7 @@ from args import get_args
 from collections import OrderedDict
 from json import dumps
 from model.model import DCRNNModel_nextTimePred
+from model.model import NeuroGNN_nextTimePred
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 from torch.optim.lr_scheduler import CosineAnnealingLR
@@ -41,12 +42,14 @@ def main(args):
         json.dump(vars(args), f, indent=4, sort_keys=True)
 
     # Set up logging
-    run_name = f'{args.run_identity}-window:{args.max_seq_len}-horizon:{args.output_seq_len}-{str(datetime.now().strftime("%Y-%m-%d %H:%M"))}'
+    run_name = f'{args.model_name}-window:{args.max_seq_len}-horizon:{args.output_seq_len}-{str(datetime.now().strftime("%Y-%m-%d %H:%M"))}'
     log = utils.get_logger(args.save_dir, 'train')
     tbx = SummaryWriter(args.save_dir)
     wandb_logger = WandbLogger("EEG_Pretrain_Forecast", args.use_wandb, run_name)
     wandb_logger.log_hyperparams(args)
     log.info('Args: {}'.format(dumps(vars(args), indent=4, sort_keys=True)))
+    
+    augment_metaseries = True if args.model_name == 'neurognn' else False
 
     # Build dataset
     log.info('Building dataset...')
@@ -66,11 +69,17 @@ def main(args):
         top_k=args.top_k,
         filter_type=args.filter_type,
         use_fft=args.use_fft,
-        preproc_dir=args.preproc_dir)
+        preproc_dir=args.preproc_dir,
+        augment_metaseries=augment_metaseries)
 
     # Build model
     log.info('Building model...')
-    model = DCRNNModel_nextTimePred(device=device, args=args)
+    if args.model_name == "dcrnn":
+        model = DCRNNModel_nextTimePred(device=device, args=args)
+    elif args.model_name == "neurognn":
+        dist_adj = pickle.load(open('./data/electrode_graph/adj_mx_3d.pkl', "rb"))
+        initial_sem_embs = utils.get_semantic_embeds()
+        model = NeuroGNN_nextTimePred(args, device, dist_adj[2], initial_sem_embs)
     wandb_logger.watch_model(model)
 
     num_params = utils.count_parameters(model)
@@ -167,7 +176,10 @@ def train(
 
                 # Forward
                 # (batch_size, seq_len, num_nodes, output_dim)
-                seq_preds = model(x, y, supports, batches_seen=step)
+                if args.model_name == "dcrnn":
+                    seq_preds = model(x, y, supports, batches_seen=step)
+                elif args.model_name == "neurognn":
+                    seq_preds = model(x, y, batches_seen=step)
 
                 loss = utils.compute_regression_loss(
                     y_true=y,

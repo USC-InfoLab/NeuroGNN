@@ -368,7 +368,7 @@ class DCRNNModel_nextTimePred(nn.Module):
 ########## NeuroGNN Classes ##########
 
 class NeuroGNN_Encoder(nn.Module):
-    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=6,
+    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=5,
                  semantic_embs=None, semantic_embs_dim=128,
                  dropout_rate=0.5, leaky_rate=0.2,
                  device='cpu', gru_dim=256, num_heads=8,
@@ -547,7 +547,7 @@ class NeuroGNN_Encoder(nn.Module):
             X_gnn = F.relu(X_gnn)
         X_hat = torch.cat((X, X_gnn), dim=2)
         # TODO: Fix this part
-        return self.fc(X_hat)
+        return self.fc(X_hat), attention, (adj_mat_thresholded, adj_mat_unthresholded, embed_att, self.dist_adj, mhead_att_mat)
         # if forecast.size()[-1] == 1:
         #     return forecast.unsqueeze(1).squeeze(-1), attention.unsqueeze(0), (adj_mat_thresholded, adj_mat_unthresholded, embed_att, self.dist_adj, mhead_att_mat)
         # else:
@@ -712,7 +712,7 @@ class NeuroGNN_Classification(nn.Module):
         Returns:
             pool_logits: logits from last FC layer (before sigmoid/softmax)
         """
-        node_embeds = self.encoder(input_seq)
+        node_embeds, _, _ = self.encoder(input_seq)
         logits = self.fc(self.relu(self.dropout(node_embeds)))
         
         # max-pooling over nodes
@@ -720,3 +720,88 @@ class NeuroGNN_Classification(nn.Module):
 
         return pool_logits
         
+
+########## Model for next time prediction ##########
+class NeuroGNN_nextTimePred(nn.Module):
+    def __init__(self, args, device=None, dist_adj=None, initial_sem_embeds=None, meta_nodes_num=5):
+        super(NeuroGNN_nextTimePred, self).__init__()
+
+        num_nodes = args.num_nodes
+        num_rnn_layers = 1
+        rnn_units = args.rnn_units
+        enc_input_dim = args.input_dim
+        dec_input_dim = args.output_dim
+        output_dim = args.output_dim
+        max_diffusion_step = args.max_diffusion_step
+
+        self.num_nodes = args.num_nodes
+        self.meta_nodes_num = meta_nodes_num
+        self.num_rnn_layers = 1
+        self.rnn_units = rnn_units
+        self._device = device
+        self.output_dim = output_dim
+        self.cl_decay_steps = args.cl_decay_steps
+        self.use_curriculum_learning = bool(args.use_curriculum_learning)
+
+        self.encoder = NeuroGNN_Encoder(input_dim=enc_input_dim,
+                                        seq_length=args.max_seq_len,
+                                        output_dim=self.rnn_units,
+                                        dist_adj=dist_adj,
+                                        semantic_embs=initial_sem_embeds
+                                        )
+        self.decoder = DCGRUDecoder(input_dim=dec_input_dim,
+                                    max_diffusion_step=max_diffusion_step,
+                                    num_nodes=num_nodes+meta_nodes_num, hid_dim=rnn_units,
+                                    output_dim=output_dim,
+                                    num_rnn_layers=num_rnn_layers,
+                                    dcgru_activation=args.dcgru_activation,
+                                    filter_type=args.filter_type,
+                                    device=device,
+                                    dropout=args.dropout)
+
+    def forward(
+            self,
+            encoder_inputs,
+            decoder_inputs,
+            batches_seen=None):
+        """
+        Args:
+            encoder_inputs: encoder input sequence, shape (batch, input_seq_len, num_nodes, input_dim)
+            decoder_inputs: decoder input sequence, shape (batch, output_seq_len, num_nodes, output_dim)
+            batches_seen: number of examples seen so far, for teacher forcing
+        Returns:
+            outputs: predicted output sequence, shape (batch, output_seq_len, num_nodes, output_dim)
+        """
+        batch_size, output_seq_len, num_nodes, _ = decoder_inputs.shape
+
+        # (seq_len, batch_size, num_nodes, output_dim)
+        decoder_inputs = torch.transpose(decoder_inputs, dim0=0, dim1=1)
+
+        # encoder
+        # (num_layers, batch, rnn_units*num_nodes)
+        # (batch, num_nodes, node_embedding_dim)
+        encoder_hidden_state, adj_mat, _ = self.encoder(encoder_inputs)
+        supports = adj_mat.repeat(batch_size, 1, 1)  # (batch, num_nodes, num_nodes)
+        
+        #(num_layers, batch, node_embedding_dim*num_nodes)
+        encoder_hidden_state = encoder_hidden_state.reshape(self.num_rnn_layers, batch_size, -1)
+
+        # decoder
+        if self.training and self.use_curriculum_learning and (
+                batches_seen is not None):
+            teacher_forcing_ratio = utils.compute_sampling_threshold(
+                self.cl_decay_steps, batches_seen)
+        else:
+            teacher_forcing_ratio = None
+        outputs = self.decoder(
+            decoder_inputs,
+            encoder_hidden_state,
+            supports,
+            teacher_forcing_ratio=teacher_forcing_ratio)  # (seq_len, batch_size, num_nodes * output_dim)
+        # (seq_len, batch_size, num_nodes, output_dim)
+        outputs = outputs.reshape((output_seq_len, batch_size, num_nodes, -1))
+        # (batch_size, seq_len, num_nodes, output_dim)
+        outputs = torch.transpose(outputs, dim0=0, dim1=1)
+
+        return outputs
+########## Model for next time prediction ##########

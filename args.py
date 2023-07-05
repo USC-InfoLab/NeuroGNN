@@ -77,7 +77,7 @@ def get_args():
         help='Top-k neighbors of each node to keep, for graph sparsity.')
 
     # Model args
-    parser.add_argument("--model_name", type=str, default="dcrnn", choices=("dcrnn", "lstm", "densecnn", "cnnlstm", "neurognn"))
+    parser.add_argument("--model_name", type=str, default="neurognn", choices=("dcrnn", "lstm", "densecnn", "cnnlstm", "neurognn"))
     parser.add_argument('--num_nodes',
                         type=int,
                         default=19,
@@ -195,9 +195,6 @@ def get_args():
                         default=False,
                         action='store_true',
                         help='Whether use wandb to log results.')
-    parser.add_argument('--run_identity', 
-                        type=str, 
-                        default='DCRNN')
 
     parser.add_argument(
         '--patience',

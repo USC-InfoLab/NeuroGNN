@@ -121,6 +121,7 @@ class SeizureDataset(Dataset):
             filter_type: 'laplacian' for distance graph, 'dual_random_walk' for correlation graph
             use_fft: whether perform Fourier transform
             preproc_dir: dir to preprocessed Fourier transformed data, optional 
+            augment_metaseries: whether to augment with metaseries
         """
         if standardize and (scaler is None):
             raise ValueError('To standardize, please provide scaler.')
@@ -427,6 +428,7 @@ def load_dataset_classification(
         filter_type: 'laplacian' for distance graph, 'dual_random_walk' for correlation graph
         use_fft: whether perform Fourier transform
         preproc_dir: dir to preprocessed Fourier transformed data, optional
+        augment_metaseries: whether to augment the data with meta-series, optional
     Returns:
         dataloaders: dictionary of train/dev/test dataloaders
         datasets: dictionary of train/dev/test datasets
