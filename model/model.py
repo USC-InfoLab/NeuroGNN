@@ -371,9 +371,9 @@ class NeuroGNN_Encoder(nn.Module):
     def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=6,
                  semantic_embs=None, semantic_embs_dim=128,
                  dropout_rate=0.5, leaky_rate=0.2,
-                 device='cpu', gru_dim=128, num_heads=8,
-                 conv_hidden_dim=128, conv_num_layers=3,
-                 output_dim=128,
+                 device='cpu', gru_dim=256, num_heads=8,
+                 conv_hidden_dim=256, conv_num_layers=3,
+                 output_dim=256,
                  dist_adj=None):
         super(NeuroGNN_Encoder, self).__init__()
         self.gru_dim = gru_dim
@@ -429,7 +429,7 @@ class NeuroGNN_Encoder(nn.Module):
         for l in range(self.conv_layers_num-1):
             self.convs.append(pyg_nn.GCNConv(self.conv_hidden_dim, self.conv_hidden_dim))
 
-
+        # TODO: Undo
         self.fc = nn.Sequential(
             nn.Linear(int(self.conv_hidden_dim + self.node_feature_dim), int(self.output_dim)),
             nn.ReLU()

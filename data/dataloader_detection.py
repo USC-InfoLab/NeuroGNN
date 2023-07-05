@@ -150,7 +150,7 @@ class SeizureDataset(Dataset):
             seed=123,
             use_fft=False,
             preproc_dir=None,
-            augment_meta_series=False):
+            augment_metaseries=False):
         """
         Args:
             input_dir: dir to resampled signals h5 files
@@ -189,7 +189,7 @@ class SeizureDataset(Dataset):
         self.filter_type = filter_type
         self.use_fft = use_fft
         self.preproc_dir = preproc_dir
-        self.augment_meta_series = augment_meta_series
+        self.augment_metaseries = augment_metaseries
 
         # get full paths to all raw edf files
         self.edf_files = []
@@ -402,8 +402,8 @@ class SeizureDataset(Dataset):
         # (max_seq_len, num_nodes, input_dim)
         x = torch.FloatTensor(curr_feature)
         # TODO: Adding meta-nodes series. Is this a good way?
-        if self.augment_meta_series:
-            x = augment_meta_series(x, META_NODE_INDICES)
+        if self.augment_metaseries:
+            x = augment_data(x, META_NODE_INDICES)
         y = torch.FloatTensor([seizure_label])
         seq_len = torch.LongTensor([self.max_seq_len])
         writeout_fn = h5_fn.split('.h5')[0]
@@ -425,7 +425,7 @@ class SeizureDataset(Dataset):
         return (x, y, seq_len, indiv_supports, indiv_adj_mat, writeout_fn)
     
 
-def augment_meta_series(x, meta_node_indices):
+def augment_data(x, meta_node_indices):
     """
     Args:
         x: (max_seq_len, num_nodes, input_dim)
@@ -458,7 +458,7 @@ def load_dataset_detection(
         sampling_ratio=1,
         seed=123,
         preproc_dir=None,
-        augment_meta_series=False):
+        augment_metaseries=False):
     """
     Args:
         input_dir: dir to preprocessed h5 file
@@ -532,7 +532,7 @@ def load_dataset_detection(
                                  seed=seed,
                                  use_fft=use_fft,
                                  preproc_dir=preproc_dir,
-                                 augment_meta_series=augment_meta_series)
+                                 augment_metaseries=augment_metaseries)
 
         if split == 'train':
             shuffle = True
