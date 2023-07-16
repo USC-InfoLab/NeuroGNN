@@ -21,7 +21,7 @@ from model.model import DCRNNModel_classification, DCRNNModel_nextTimePred
 from model.densecnn import DenseCNN
 from model.lstm import LSTMModel
 from model.cnnlstm import CNN_LSTM
-from model.model import NeuroGNN_Classification
+from model.model import NeuroGNN_Classification, NeuroGNN_nextTimePred
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 from dotted_dict import DottedDict
@@ -42,7 +42,7 @@ def main(args):
 
     # Get save directories
     args.save_dir = utils.get_save_dir(
-        args.save_dir, training=True if args.do_train else False)
+        f'{args.save_dir}/{args.model_name}', training=True if args.do_train else False)
     # Save args
     args_file = os.path.join(args.save_dir, 'args.json')
     with open(args_file, 'w') as f:
@@ -50,6 +50,8 @@ def main(args):
 
     # Set up logger
     run_name = f'{args.model_name}-window:{args.max_seq_len}-horizon:{args.output_seq_len}-{str(datetime.now().strftime("%Y-%m-%d %H:%M"))}'
+    if args.fine_tune:
+        run_name = f'finetuned-{run_name}'
     log = utils.get_logger(args.save_dir, 'train')
     tbx = SummaryWriter(args.save_dir)
     wandb_logger = WandbLogger(f"EEG_{args.task}", args.use_wandb, run_name)
@@ -154,15 +156,22 @@ def main(args):
                     args_pretrained,
                     'num_rnn_layers',
                     args.pretrained_num_rnn_layers)
-                pretrained_model = DCRNNModel_nextTimePred(
-                    args=args_pretrained, device=device)  # placeholder
+                if args.model_name == 'dcrnn':
+                    pretrained_model = DCRNNModel_nextTimePred(
+                        args=args_pretrained, device=device)  # placeholder
+                elif args.model_name == 'neurognn':
+                    pretrained_model = NeuroGNN_nextTimePred(
+                        args=args_pretrained, device=device,
+                        dist_adj=dist_adj[2], initial_sem_embeds=initial_sem_embs
+                        )  # placeholder
                 pretrained_model = utils.load_model_checkpoint(
                     args.load_model_path, pretrained_model)
 
                 model = utils.build_finetune_model(
                     model_new=model,
                     model_pretrained=pretrained_model,
-                    num_rnn_layers=args.num_rnn_layers)
+                    num_rnn_layers=args.num_rnn_layers,
+                    model_name=args.model_name)
             else:
                 raise ValueError(
                     'For fine-tuning, provide pretrained model in load_model_path!')

@@ -201,16 +201,21 @@ def load_model_checkpoint(checkpoint_file, model, optimizer=None):
 
 
 def build_finetune_model(model_new, model_pretrained, num_rnn_layers,
-                         num_layers_frozen=0):
+                         num_layers_frozen=0, model_name='dcrnn'):
     """
-    Load pretrained weights to DCRNN model
+    Load pretrained weights to DCRNN or NeuroGNN model
     """
     # Load in pre-trained parameters
-    for l in range(num_rnn_layers):
-        model_new.encoder.encoding_cells[l].dconv_gate = model_pretrained.encoder.encoding_cells[l].dconv_gate
-        model_new.encoder.encoding_cells[l].dconv_candidate = model_pretrained.encoder.encoding_cells[l].dconv_candidate
-
+    if model_name == 'dcrnn':
+        for l in range(num_rnn_layers):
+            model_new.encoder.encoding_cells[l].dconv_gate = model_pretrained.encoder.encoding_cells[l].dconv_gate
+            model_new.encoder.encoding_cells[l].dconv_candidate = model_pretrained.encoder.encoding_cells[l].dconv_candidate
+    elif model_name == 'neurognn':
+        model_new.encoder = model_pretrained.encoder
+    else:
+        raise NotImplementedError
     return model_new
+
 
 class AverageMeter:
     """Keep track of average values over time.
@@ -533,6 +538,7 @@ def compute_regression_loss(
 
 
 def get_semantic_embeds():
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
     llm = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
     
     descriptions = []

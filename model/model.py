@@ -781,7 +781,7 @@ class NeuroGNN_nextTimePred(nn.Module):
         # (num_layers, batch, rnn_units*num_nodes)
         # (batch, num_nodes, node_embedding_dim)
         encoder_hidden_state, adj_mat, _ = self.encoder(encoder_inputs)
-        supports = adj_mat.repeat(batch_size, 1, 1)  # (batch, num_nodes, num_nodes)
+        supports = [adj_mat.repeat(batch_size, 1, 1)]  # (batch, num_nodes, num_nodes)
         
         #(num_layers, batch, node_embedding_dim*num_nodes)
         encoder_hidden_state = encoder_hidden_state.reshape(self.num_rnn_layers, batch_size, -1)
