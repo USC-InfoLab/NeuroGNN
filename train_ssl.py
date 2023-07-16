@@ -34,7 +34,7 @@ def main(args):
     utils.seed_torch(seed=args.rand_seed)
 
     # Get save directories
-    args.save_dir = utils.get_save_dir(args.save_dir, training=True)
+    args.save_dir = utils.get_save_dir(f'{args.save_dir}/{args.model_name}', training=True)
 
     # Save args
     args_file = os.path.join(args.save_dir, 'args.json')
@@ -274,6 +274,12 @@ def evaluate(model, dataloader, args, save_dir, device, is_test=False,
             # Forward
             # (batch_size, output_seq_len, num_nodes, output_dim)
             seq_preds = model(x, y, supports)
+            if args.model_name == "dcrnn":
+                seq_preds = model(x, y, supports)
+            elif args.model_name == "neurognn":
+                seq_preds = model(x, y)
+                seq_preds = seq_preds[:, :, :args.num_nodes, :]
+                y = y[:, :, :args.num_nodes, :]
 
             loss = utils.compute_regression_loss(
                 y_true=y,
