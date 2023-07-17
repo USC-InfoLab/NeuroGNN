@@ -31,4 +31,4 @@ python train.py --input_dir /storage/datasets_public/eeg_tuh_seizure/Resampled_T
 
 
 -- For fine-tuning pre-trained models, add the following to the end (for classificaiton and detection)
---fine_tune --load_model_path /home/users/arash/W4H/eeg/saved_results/pretrained_eeg_ssl/neurognn/<LOCATION> --pretrained_num_rnn_layers 1
+--fine_tune --load_model_path/home/users/arash/W4H/eeg/saved_results/pretrained_eeg_ssl/<LOCATION> --pretrained_num_rnn_layers 1
