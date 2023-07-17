@@ -365,17 +365,14 @@ class DCRNNModel_nextTimePred(nn.Module):
 
 
 
-########## NeuroGNN Classes ##########
-
-class NeuroGNN_Encoder(nn.Module):
+########## NeuroGNN Classes ##########  
+class NeuroGNN_GraphConstructor(nn.Module):
     def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=5,
                  semantic_embs=None, semantic_embs_dim=128,
                  dropout_rate=0.5, leaky_rate=0.2,
                  device='cpu', gru_dim=256, num_heads=8,
-                 conv_hidden_dim=256, conv_num_layers=3,
-                 output_dim=256,
-                 dist_adj=None):
-        super(NeuroGNN_Encoder, self).__init__()
+                 dist_adj=None, temporal_embs_dim=256):
+        super(NeuroGNN_GraphConstructor, self).__init__()
         self.gru_dim = gru_dim
         # self.stack_cnt = stack_cnt
         self.alpha = leaky_rate
@@ -400,7 +397,7 @@ class NeuroGNN_Encoder(nn.Module):
         )
         
         # self.fc_ta = nn.Linear(gru_dim, self.time_step) #TODO remove this
-        self.fc_ta = nn.Linear(gru_dim, 128)
+        self.fc_ta = nn.Linear(gru_dim, temporal_embs_dim)
         
         for i, cell in enumerate(self.GRU_cells):
             cell.flatten_parameters()
@@ -412,28 +409,9 @@ class NeuroGNN_Encoder(nn.Module):
                 
        
         # self.node_feature_dim = time_step + semantic_embs_dim
-        self.node_feature_dim = 128 + semantic_embs_dim
+        self.node_feature_dim = temporal_embs_dim + semantic_embs_dim
         
     
-
-
-        self.convs = nn.ModuleList()
-
-        self.conv_hidden_dim = conv_hidden_dim
-        self.conv_layers_num = conv_num_layers
-        
-        self.output_dim = output_dim
-
-        self.convs.append(pyg_nn.GCNConv(self.node_feature_dim, self.conv_hidden_dim)) 
-
-        for l in range(self.conv_layers_num-1):
-            self.convs.append(pyg_nn.GCNConv(self.conv_hidden_dim, self.conv_hidden_dim))
-
-        # TODO: Undo
-        self.fc = nn.Sequential(
-            nn.Linear(int(self.conv_hidden_dim + self.node_feature_dim), int(self.output_dim)),
-            nn.ReLU()
-        )
 
         self.dist_adj = np.ones((nodes_num+meta_nodes_num, nodes_num+meta_nodes_num))
         if dist_adj is not None:
@@ -465,9 +443,7 @@ class NeuroGNN_Encoder(nn.Module):
                 m.in_proj_bias.data.zero_()
                 m.out_proj.bias.data.zero_()  
 
-        self.to(device)
-
-        
+        self.to(device) 
 
 
     def latent_correlation_layer(self, x):
@@ -497,24 +473,14 @@ class NeuroGNN_Encoder(nn.Module):
 
 
 
-    def forward(self, x, static_features=None):
+    def forward(self, x):
         attention, weighted_res = self.latent_correlation_layer(x) 
-        mhead_att_mat = attention.detach().clone()
-
-        # attention_mask = self.attention_thres(attention)
-        # attention[~attention_mask] = 0
-
-
-        
+        mhead_att_mat = attention.detach().clone()        
         
         weighted_res = self.fc_ta(weighted_res)
         weighted_res = F.relu(weighted_res)
-        # weighted_res = F.relu(weighted_res)
         
-        # X = weighted_res.unsqueeze(1).permute(0, 1, 2, 3).contiguous() 
         X = weighted_res.permute(0, 1, 2).contiguous()
-        #TODO: should I add the static features (e.g., POI category vec) here??
-        #TODO: appending static features vec to X
         if self.semantic_embs is not None:
             transformed_embeds = self.linear_semantic_embs(self.semantic_embs.to(x.get_device()))
             # transformed_embeds = self.semantic_embs.to(x.get_device())
@@ -523,35 +489,16 @@ class NeuroGNN_Encoder(nn.Module):
             
         embed_att = self.get_embed_att_mat_cosine(transformed_embeds)
         self.dist_adj = self.dist_adj.to(x.get_device())
-        # attention = (((self.dist_adj + embed_att)/2) * attention)
         attention = ((self.att_alpha*self.dist_adj) + (1-self.att_alpha)*embed_att) * attention
         adj_mat_unthresholded = attention.detach().clone()
-        # attention = ((self.dist_adj + embed_att) * attention)
         
         attention_mask = self.case_amplf_mask(attention)
         
-        # attention_mask = self.attention_thres(attention)
         attention[~attention_mask] = 0
         adj_mat_thresholded = attention.detach().clone()
         
-        edge_indices, edge_attrs = pyg_utils.dense_to_sparse(attention)
-        
-        # X = self.GLUs(X)
-        
-
-        
-        X_gnn = self.convs[0](X, edge_indices, edge_attrs)
-        X_gnn = F.relu(X_gnn)
-        for stack_i in range(1, self.conv_layers_num):
-            X_gnn = self.convs[stack_i](X_gnn, edge_indices, edge_attrs)
-            X_gnn = F.relu(X_gnn)
-        X_hat = torch.cat((X, X_gnn), dim=2)
-        # TODO: Fix this part
-        return self.fc(X_hat), attention, (adj_mat_thresholded, adj_mat_unthresholded, embed_att, self.dist_adj, mhead_att_mat)
-        # if forecast.size()[-1] == 1:
-        #     return forecast.unsqueeze(1).squeeze(-1), attention.unsqueeze(0), (adj_mat_thresholded, adj_mat_unthresholded, embed_att, self.dist_adj, mhead_att_mat)
-        # else:
-        #     return forecast.squeeze(1).permute(0, 2, 1).contiguous(), attention.unsqueeze(0), (adj_mat_thresholded, adj_mat_unthresholded, embed_att, self.dist_adj, mhead_att_mat)
+        # X: Node features, attention: fused adjacency matrix
+        return X, attention, (adj_mat_thresholded, adj_mat_unthresholded, embed_att, self.dist_adj, mhead_att_mat) 
         
     
     def _create_embedding_layers(self, embedding_size_dict, embedding_dim_dict, device):
@@ -634,6 +581,102 @@ class NeuroGNN_Encoder(nn.Module):
         
         # return similarity_matrix
         return similarity_matrix
+    
+    
+    
+    
+class NeuroGNN_GNN_GCN(nn.Module):
+    def __init__(self, node_feature_dim,
+                 device='cpu', conv_hidden_dim=256, conv_num_layers=3):
+        super(NeuroGNN_GNN_GCN, self).__init__()
+        self.node_feature_dim = node_feature_dim      
+        self.conv_hidden_dim = conv_hidden_dim
+        self.conv_layers_num = conv_num_layers
+
+        self.convs = nn.ModuleList()
+        self.convs.append(pyg_nn.GCNConv(self.node_feature_dim, self.conv_hidden_dim)) 
+        for l in range(self.conv_layers_num-1):
+            self.convs.append(pyg_nn.GCNConv(self.conv_hidden_dim, self.conv_hidden_dim))
+        
+        # initialize weights using xavier
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif isinstance(m, nn.GRU):
+                for name, param in m.named_parameters():
+                    if 'weight' in name:
+                        nn.init.xavier_normal_(param)
+                    elif 'bias' in name:
+                        param.data.zero_()
+            elif isinstance(m, nn.LayerNorm):
+                m.bias.data.zero_()
+                m.weight.data.fill_(1.0)
+        self.to(device)
+
+
+    def forward(self, X, adj_mat):
+        edge_indices, edge_attrs = pyg_utils.dense_to_sparse(adj_mat)
+        X_gnn = self.convs[0](X, edge_indices, edge_attrs)
+        X_gnn = F.relu(X_gnn)
+        for stack_i in range(1, self.conv_layers_num):
+            X_gnn = self.convs[stack_i](X_gnn, edge_indices, edge_attrs)
+            X_gnn = F.relu(X_gnn)
+        return X_gnn
+
+    
+
+class NeuroGNN_Encoder(nn.Module):
+    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=5,
+                 semantic_embs=None, semantic_embs_dim=128,
+                 dropout_rate=0.5, leaky_rate=0.2,
+                 device='cpu', gru_dim=256, num_heads=8,
+                 conv_hidden_dim=256, conv_num_layers=3,
+                 output_dim=256,
+                 dist_adj=None,
+                 temporal_embs_dim=256,
+                 gnn_block_type='gcn'):
+        super(NeuroGNN_Encoder, self).__init__()
+        self.graph_constructor = NeuroGNN_GraphConstructor(input_dim=input_dim, 
+                                                           seq_length=seq_length, 
+                                                           nodes_num=nodes_num, 
+                                                           meta_nodes_num=meta_nodes_num,
+                                                           semantic_embs=semantic_embs, 
+                                                           semantic_embs_dim=semantic_embs_dim,
+                                                           dropout_rate=dropout_rate, 
+                                                           leaky_rate=leaky_rate,
+                                                           device=device, 
+                                                           gru_dim=gru_dim, 
+                                                           num_heads=num_heads,
+                                                           dist_adj=dist_adj,
+                                                           temporal_embs_dim=temporal_embs_dim)
+        
+        self.node_features_dim = temporal_embs_dim+semantic_embs_dim
+        self.conv_hidden_dim = conv_hidden_dim
+        self.output_dim = output_dim
+        
+        if gnn_block_type.lower() == 'gcn':
+            self.gnn_block = NeuroGNN_GNN_GCN(node_feature_dim=self.node_features_dim,
+                                            device=device,
+                                            conv_hidden_dim=conv_hidden_dim,
+                                            conv_num_layers=conv_num_layers)
+        self.fc = nn.Sequential(
+            nn.Linear(int(self.conv_hidden_dim + self.node_features_dim), int(self.output_dim)),
+            nn.ReLU()
+        )
+        self.to(device)
+
+        
+    def forward(self, x):
+        X, adj_mat, (adj_mat_thresholded, adj_mat_unthresholded, embed_att, dist_adj, mhead_att_mat) = self.graph_constructor(x)
+        X_gnn = self.gnn_block(X, adj_mat)
+        X_hat = torch.cat((X, X_gnn), dim=2)
+        X_hat = self.fc(X_hat)
+        return X_hat, adj_mat, (adj_mat_thresholded, adj_mat_unthresholded, embed_att, dist_adj, mhead_att_mat)
+        
+
+
 
 
 class Attention(nn.Module):
@@ -673,9 +716,6 @@ class Attention(nn.Module):
     
     
     
-    
-    
-    
 ########## Model for seizure classification/detection ##########
 class NeuroGNN_Classification(nn.Module):
     def __init__(self, args, num_classes, device=None, dist_adj=None, initial_sem_embeds=None):
@@ -691,12 +731,15 @@ class NeuroGNN_Classification(nn.Module):
         self.rnn_units = rnn_units
         self._device = device
         self.num_classes = num_classes
+        
+        self.gnn_type = args.gnn_type
 
         self.encoder = NeuroGNN_Encoder(input_dim=enc_input_dim,
                                         seq_length=args.max_seq_len,
                                         output_dim=self.rnn_units,
                                         dist_adj=dist_adj,
-                                        semantic_embs=initial_sem_embeds
+                                        semantic_embs=initial_sem_embeds,
+                                        gnn_block_type=self.gnn_type
                                         )
 
         self.fc = nn.Linear(rnn_units, num_classes)
@@ -742,12 +785,15 @@ class NeuroGNN_nextTimePred(nn.Module):
         self.output_dim = output_dim
         self.cl_decay_steps = args.cl_decay_steps
         self.use_curriculum_learning = bool(args.use_curriculum_learning)
+        
+        self.gnn_type = args.gnn_type
 
         self.encoder = NeuroGNN_Encoder(input_dim=enc_input_dim,
                                         seq_length=args.max_seq_len,
                                         output_dim=self.rnn_units,
                                         dist_adj=dist_adj,
-                                        semantic_embs=initial_sem_embeds
+                                        semantic_embs=initial_sem_embeds,
+                                        gnn_block_type=self.gnn_type
                                         )
         self.decoder = DCGRUDecoder(input_dim=dec_input_dim,
                                     max_diffusion_step=max_diffusion_step,
@@ -805,3 +851,105 @@ class NeuroGNN_nextTimePred(nn.Module):
 
         return outputs
 ########## Model for next time prediction ##########
+
+
+
+
+########## StemGNN model modules ##########
+class GLU(nn.Module):
+    def __init__(self, input_channel, output_channel):
+        super(GLU, self).__init__()
+        self.linear_left = nn.Linear(input_channel, output_channel)
+        self.linear_right = nn.Linear(input_channel, output_channel)
+
+    def forward(self, x):
+        return torch.mul(self.linear_left(x), torch.sigmoid(self.linear_right(x)))
+
+
+
+class StockBlockLayer(nn.Module):
+    def __init__(self, time_step, unit, multi_layer, stack_cnt=0):
+        super(StockBlockLayer, self).__init__()
+        self.time_step = time_step
+        self.unit = unit
+        self.stack_cnt = stack_cnt
+        self.multi = multi_layer
+        self.weight = nn.Parameter(
+            torch.Tensor(1, 3 + 1, 1, self.time_step * self.multi,
+                         self.multi * self.time_step))  # [K+1, 1, in_c, out_c]
+        nn.init.xavier_normal_(self.weight)
+        self.forecast = nn.Linear(self.time_step * self.multi, self.time_step * self.multi)
+        self.forecast_result = nn.Linear(self.time_step * self.multi, self.time_step)
+        if self.stack_cnt == 0:
+            self.backcast = nn.Linear(self.time_step * self.multi, self.time_step)
+        self.backcast_short_cut = nn.Linear(self.time_step, self.time_step)
+        self.relu = nn.ReLU()
+        self.GLUs = nn.ModuleList()
+        self.output_channel = 4 * self.multi
+        for i in range(3):
+            if i == 0:
+                self.GLUs.append(GLU(self.time_step * 4, self.time_step * self.output_channel))
+                self.GLUs.append(GLU(self.time_step * 4, self.time_step * self.output_channel))
+            elif i == 1:
+                self.GLUs.append(GLU(self.time_step * self.output_channel, self.time_step * self.output_channel))
+                self.GLUs.append(GLU(self.time_step * self.output_channel, self.time_step * self.output_channel))
+            else:
+                self.GLUs.append(GLU(self.time_step * self.output_channel, self.time_step * self.output_channel))
+                self.GLUs.append(GLU(self.time_step * self.output_channel, self.time_step * self.output_channel))
+
+    def spe_seq_cell(self, input):
+
+        ### input: 32, 4, 1, 2000, 24
+        batch_size, k, input_channel, node_cnt, time_step = input.size()
+        input = input.view(batch_size, -1, node_cnt, time_step) ## 32, 4, 2000, 24
+        #print(f"input{input.shape}")
+
+        # ffted = torch.rfft(input, 1, onesided=False) ### older VERSION 32, 4, 2000, 24, 2
+        # real = ffted[..., 0].permute(0, 2, 1, 3).contiguous().reshape(batch_size, node_cnt, -1)### 32, 2000, 96
+        # img = ffted[..., 1].permute(0, 2, 1, 3).contiguous().reshape(batch_size, node_cnt, -1)
+
+
+        ffted  = torch.fft.fft(input)
+        real = ffted.real.permute(0, 2, 1, 3).contiguous().reshape(batch_size, node_cnt, -1)
+        img = ffted.imag.permute(0, 2, 1, 3).contiguous().reshape(batch_size, node_cnt, -1)
+
+
+        for i in range(3):
+            real = self.GLUs[i * 2](real)
+            img = self.GLUs[2 * i + 1](img)
+        real = real.reshape(batch_size, node_cnt, 4, -1).permute(0, 2, 1, 3).contiguous() ##32, 4, 2000, 120
+        img = img.reshape(batch_size, node_cnt, 4, -1).permute(0, 2, 1, 3).contiguous()
+
+        # print(f"real{real.shape}")
+        time_step_as_inner = torch.complex(real, img)
+        iffted = torch.fft.ifft(time_step_as_inner)
+        # print(f"iffted{iffted[0]}")
+
+        # time_step_as_inner = torch.cat([real.unsqueeze(-1), img.unsqueeze(-1)], dim=-1) ### ordler 32, 4, 2000, 120, 2
+        # iffted = torch.irfft(time_step_as_inner, 1, onesided=False) ###iffted =  32, 4, 2000, 120
+
+
+        return iffted.real
+
+    def forward(self, x, mul_L):
+        mul_L = mul_L.unsqueeze(1)
+        x = x.unsqueeze(1)
+        gfted = torch.matmul(mul_L, x) ## 32, 4, 1, 2000, 24
+        #print(f"gfted {gfted.shape}")
+        gconv_input = self.spe_seq_cell(gfted).unsqueeze(2) ### [32, 4, 1, 2000, 120]
+        #print(f"gconv {gconv_input.shape}")
+        igfted = torch.matmul(gconv_input, self.weight)
+        #print(f"igfted  {igfted .shape}")
+        igfted = torch.sum(igfted, dim=1) #### [32, 4, 1, 2000, 120]
+        forecast_source = torch.sigmoid(self.forecast(igfted).squeeze(1))
+        forecast = self.forecast_result(forecast_source)
+        if self.stack_cnt == 0:
+            backcast_short = self.backcast_short_cut(x).squeeze(1)
+            backcast_source = torch.sigmoid(self.backcast(igfted) - backcast_short)
+        else:
+            backcast_source = None
+        return forecast, backcast_source
+    
+    
+    
+########## NeuroGNN Graph construction + StemGNN GNN Block model modules ##########
