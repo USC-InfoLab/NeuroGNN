@@ -382,9 +382,9 @@ class NeuroGNN_GraphConstructor(nn.Module):
         self.nodes_num = nodes_num
         self.meta_nodes_num = meta_nodes_num
         self.seq1 = nn.Sequential(
-            nn.Linear(input_dim, 64),
+            nn.Linear(input_dim, 128),
             nn.ReLU(),
-            nn.Linear(64, 128),
+            nn.Linear(128, 128),
             nn.ReLU(),
             nn.Dropout(dropout_rate)
         )
@@ -585,9 +585,75 @@ class NeuroGNN_GraphConstructor(nn.Module):
     
     
     
+class NeuroGNN_StemGNN_Block(nn.Module):
+    def __init__(self, node_feature_dim,
+                 device='cpu', output_dim=128, stack_cnt=2, nodes_num=24, multi_layer=5, conv_hidden_dim=32):
+        super(NeuroGNN_StemGNN_Block, self).__init__()
+        self.node_feature_dim = node_feature_dim      
+        self.output_dim = output_dim
+        self.stack_cnt = stack_cnt
+        self.nodes_num = nodes_num
+        self.multi_layer = multi_layer
+        self.conv_hidden_dim = conv_hidden_dim
+        
+        self.fc1 = nn.Linear(self.node_feature_dim, self.conv_hidden_dim)
+
+        self.stock_block = nn.ModuleList()
+        self.stock_block.extend(
+            [StockBlockLayer(self.conv_hidden_dim, self.nodes_num, self.multi_layer, stack_cnt=i) for i in range(self.stack_cnt)])
+        
+        self.fc2 = nn.Sequential(
+            nn.Linear(int(self.conv_hidden_dim), int(self.conv_hidden_dim)),
+            nn.LeakyReLU(),
+            nn.Linear(int(self.conv_hidden_dim), self.output_dim),
+            # nn.Tanh(), #TODO: Delete this line
+        )
+        
+        # initialize weights using xavier
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif isinstance(m, nn.GRU):
+                for name, param in m.named_parameters():
+                    if 'weight' in name:
+                        nn.init.xavier_normal_(param)
+                    elif 'bias' in name:
+                        param.data.zero_()
+            elif isinstance(m, nn.LayerNorm):
+                m.bias.data.zero_()
+                m.weight.data.fill_(1.0)
+        self.to(device)
+
+
+    def forward(self, x, adj_mat):
+        degree = torch.sum(adj_mat, dim=1)
+        # laplacian is symmetric
+        new_adj = 0.5 * (adj_mat + adj_mat.T)
+        degree_l = torch.diag(degree)
+        diagonal_degree_hat = torch.diag(1 / (torch.sqrt(degree) + 1e-7))
+        laplacian = torch.matmul(diagonal_degree_hat,
+                            torch.matmul(degree_l - new_adj, diagonal_degree_hat))
+        mul_L = cheb_polynomial(laplacian) # [k, N, N] k=4, N=node_num
+        
+        X = x.unsqueeze(1).permute(0, 1, 2, 3).contiguous() # [batch_size, 1, node_num, feature_dim]
+        X = self.fc1(X)
+        
+        result = []
+        for stack_i in range(self.stack_cnt):
+            output, X = self.stock_block[stack_i](X, mul_L)
+            result.append(output)
+        output = result[0] + result[1]
+        output = self.fc2(output)
+
+        return output
+    
+    
+
 class NeuroGNN_GNN_GCN(nn.Module):
     def __init__(self, node_feature_dim,
-                 device='cpu', conv_hidden_dim=256, conv_num_layers=3):
+                 device='cpu', conv_hidden_dim=64, conv_num_layers=3):
         super(NeuroGNN_GNN_GCN, self).__init__()
         self.node_feature_dim = node_feature_dim      
         self.conv_hidden_dim = conv_hidden_dim
@@ -629,11 +695,11 @@ class NeuroGNN_GNN_GCN(nn.Module):
 
 class NeuroGNN_Encoder(nn.Module):
     def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=5,
-                 semantic_embs=None, semantic_embs_dim=128,
+                 semantic_embs=None, semantic_embs_dim=256,
                  dropout_rate=0.5, leaky_rate=0.2,
                  device='cpu', gru_dim=256, num_heads=8,
-                 conv_hidden_dim=256, conv_num_layers=3,
-                 output_dim=256,
+                 conv_hidden_dim=64, conv_num_layers=3,
+                 output_dim=512,
                  dist_adj=None,
                  temporal_embs_dim=256,
                  gnn_block_type='gcn'):
@@ -661,6 +727,12 @@ class NeuroGNN_Encoder(nn.Module):
                                             device=device,
                                             conv_hidden_dim=conv_hidden_dim,
                                             conv_num_layers=conv_num_layers)
+        elif gnn_block_type.lower() == 'stemgnn':
+            self.gnn_block = NeuroGNN_StemGNN_Block(node_feature_dim=self.node_features_dim,
+                                                    device=device,
+                                                    output_dim=conv_hidden_dim,
+                                                    stack_cnt=2,
+                                                    conv_hidden_dim=conv_hidden_dim)
         self.fc = nn.Sequential(
             nn.Linear(int(self.conv_hidden_dim + self.node_features_dim), int(self.output_dim)),
             nn.ReLU()
@@ -855,7 +927,7 @@ class NeuroGNN_nextTimePred(nn.Module):
 
 
 
-########## StemGNN model modules ##########
+########## StemGNN GNN Block model modules ##########
 class GLU(nn.Module):
     def __init__(self, input_channel, output_channel):
         super(GLU, self).__init__()
@@ -952,4 +1024,24 @@ class StockBlockLayer(nn.Module):
     
     
     
-########## NeuroGNN Graph construction + StemGNN GNN Block model modules ##########
+def cheb_polynomial(laplacian):
+    """
+    Compute the Chebyshev Polynomial, according to the graph laplacian.
+    :param laplacian: the graph laplacian, [N, N].
+    :return: the multi order Chebyshev laplacian, [K, N, N].
+    """
+    N = laplacian.size(0)  # [N, N]
+    laplacian = laplacian.unsqueeze(0)
+    # first_laplacian = torch.zeros([1, N, N], device=laplacian.device, dtype=torch.float)
+    first_laplacian = torch.eye(N, device=laplacian.device, dtype=torch.float).unsqueeze(0) #TODO remove this
+    second_laplacian = laplacian
+    # third_laplacian = (2 * torch.matmul(laplacian, second_laplacian)) - first_laplacian
+    third_laplacian = (2 * laplacian * second_laplacian) - first_laplacian #TODO remove this
+    # forth_laplacian = 2 * torch.matmul(laplacian, third_laplacian) - second_laplacian
+    forth_laplacian = 2 * laplacian * third_laplacian - second_laplacian #TODO remove this
+    multi_order_laplacian = torch.cat([first_laplacian, second_laplacian, third_laplacian, forth_laplacian], dim=0)
+    return multi_order_laplacian
+    
+    
+    
+########## StemGNN GNN Block model modules ##########
