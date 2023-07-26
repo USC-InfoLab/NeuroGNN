@@ -35,7 +35,7 @@ ALL_LABEL_DICT = {'fnsz': 0, 'gnsz': 1, 'spsz': 2, 'cpsz': 3,
 #     'Left Temporal Lobe',
 #     'Right Temporal Lobe',
 #     'Occipital Lobe',
-#     'Central Region'
+#     'Central Gyrus'
 # ]
 
 CORTEX_REGIONS = [
@@ -43,7 +43,7 @@ CORTEX_REGIONS = [
     'Parietal Lobe',
     'Temporal Lobe',
     'Occipital Lobe',
-    'Central Region'
+    'Central Gyrus'
 ]
 
 # Dictionary describing eeg electrodes
@@ -52,8 +52,8 @@ CORTEX_REGIONS = [
 #     'EEG FP2': 'Fp2 is an EEG electrode placed at the frontopolar region of the scalp on the right side. It is similar to Fp1 in terms of function and purpose. By recording electrical signals from the right frontopolar area, the Fp2 electrode helps monitor activity in the frontal lobe. This electrode can be instrumental in detecting abnormalities or changes in cognitive processing, emotional regulation, and other functions associated with the frontal brain regions.',
 #     'EEG F3': 'F3 is an EEG electrode positioned on the left side of the scalp, over the frontal lobe. It captures electrical brain activity from the left frontal region and plays a crucial role in monitoring cognitive processes, attention, and motor planning associated with the left hemisphere. The F3 electrode is essential for evaluating frontal lobe abnormalities and can provide valuable insights into conditions such as epilepsy, ADHD, and executive function disorders.',
 #     'EEG F4': "F4 is an EEG electrode situated on the right side of the scalp, mirroring F3's position. It records electrical signals originating from the right frontal lobe. Similar to F3, the F4 electrode is vital for assessing cognitive functions, attention, and motor planning associated with the right hemisphere. Monitoring the electrical activity in this area is crucial for detecting abnormalities or changes in brain function and can aid in the diagnosis and management of various neurological disorders.",
-#     'EEG C3': "C3 is an EEG electrode placed on the left side of the scalp, over the central region. It captures electrical brain activity from the left central area, including the sensorimotor cortex. The C3 electrode is important for studying motor control, movement planning, and somatosensory processing associated with the left hemisphere. Monitoring this region can help identify abnormalities or disruptions in motor function and contribute to the evaluation of conditions such as stroke, movement disorders, and brain injuries.",
-#     'EEG C4': "C4 is an EEG electrode located on the right side of the scalp, corresponding to C3's position. It records electrical signals from the right central region, encompassing the sensorimotor cortex. Similar to C3, the C4 electrode is crucial for monitoring motor control, movement planning, and somatosensory processing associated with the right hemisphere. It plays a significant role in assessing motor function asymmetries and can aid in the diagnosis and treatment of conditions such as Parkinson's disease, motor cortex lesions, and focal seizures.",
+#     'EEG C3': "C3 is an EEG electrode placed on the left side of the scalp, over the Central Gyrus. It captures electrical brain activity from the left central area, including the sensorimotor cortex. The C3 electrode is important for studying motor control, movement planning, and somatosensory processing associated with the left hemisphere. Monitoring this region can help identify abnormalities or disruptions in motor function and contribute to the evaluation of conditions such as stroke, movement disorders, and brain injuries.",
+#     'EEG C4': "C4 is an EEG electrode located on the right side of the scalp, corresponding to C3's position. It records electrical signals from the right Central Gyrus, encompassing the sensorimotor cortex. Similar to C3, the C4 electrode is crucial for monitoring motor control, movement planning, and somatosensory processing associated with the right hemisphere. It plays a significant role in assessing motor function asymmetries and can aid in the diagnosis and treatment of conditions such as Parkinson's disease, motor cortex lesions, and focal seizures.",
 #     'EEG P3': "P3 is an EEG electrode positioned on the left side of the scalp, above the parietal lobe. It captures electrical brain activity from the left parietal region, which is involved in processes such as spatial awareness, attention, and sensory integration. The P3 electrode is essential for studying visuospatial processing, visual attention, and other functions associated with the left hemisphere's parietal areas. Monitoring this region can provide valuable insights into conditions like neglect syndrome, spatial processing disorders, and attentional deficits.",
 #     'EEG P4': "P4 is an EEG electrode situated on the right side of the scalp, mirroring P3's position. It records electrical signals from the right parietal lobe. The P4 electrode is instrumental in monitoring visuospatial processing, attention, and sensory integration associated with the right hemisphere's parietal regions. By assessing electrical activity in this area, it can help identify abnormalities or changes in brain function and contribute to the evaluation and management of conditions such as spatial neglect, visual attention disorders, and parietal lobe epilepsy.",
 #     'EEG O1': "O1 is an EEG electrode positioned on the left side of the scalp, over the occipital lobe. It captures electrical brain activity from the left occipital region, which is primarily responsible for visual processing and perception. The O1 electrode is essential for studying visual evoked potentials, visual attention, and other functions associated with the left hemisphere's occipital areas. Monitoring this region can provide valuable insights into conditions such as visual processing disorders, occipital lobe epilepsy, and visual hallucinations.",
@@ -64,7 +64,7 @@ CORTEX_REGIONS = [
 #     'EEG T4': "T4 is an EEG electrode placed on the right side of the scalp, above the temporal lobe. It complements T3 by recording electrical brain activity from the right temporal region. By monitoring the right hemisphere's functions related to auditory processing, language comprehension, and memory, the T4 electrode assists in assessing brain activity asymmetries and identifying abnormalities in these areas. It is particularly useful in the evaluation of temporal lobe epilepsy and language disorders.",
 #     'EEG T5': "T5 is an EEG electrode placed on the left side of the scalp, above the temporal lobe, but slightly posterior to T3. It captures electrical brain activity from the left temporal region, particularly the superior and posterior aspects. The T5 electrode is important for studying auditory processing, language comprehension, and memory functions associated with the left hemisphere's superior temporal gyrus. Monitoring this region can provide valuable insights into conditions such as temporal lobe epilepsy, auditory processing disorders, and language impairments.",
 #     'EEG T6': "T6 is an EEG electrode located on the right side of the scalp, corresponding to T5's position. It records electrical signals from the right temporal region, particularly the superior and posterior aspects of the superior temporal gyrus. Similar to T5, the T6 electrode is crucial for monitoring auditory processing, language comprehension, and memory functions associated with the right hemisphere. It plays a significant role in assessing auditory function asymmetries and can aid in the diagnosis and treatment of conditions such as temporal lobe epilepsy, auditory hallucinations, and language disorders.",
-#     'EEG FZ': "FZ is an EEG electrode positioned at the midline of the scalp, between F3 and F4. It captures electrical brain activity from the frontal-central region known as the midline prefrontal cortex. The FZ electrode is important for studying cognitive processes, working memory, and attention regulation. Monitoring this midline region can provide valuable insights into executive functions, emotional regulation, and frontal lobe abnormalities. It is particularly useful in the evaluation of conditions such as attention deficit hyperactivity disorder (ADHD), frontal lobe epilepsy, and mood disorders.",
+#     'EEG FZ': "FZ is an EEG electrode positioned at the midline of the scalp, between F3 and F4. It captures electrical brain activity from the frontal-Central Gyrus known as the midline prefrontal cortex. The FZ electrode is important for studying cognitive processes, working memory, and attention regulation. Monitoring this midline region can provide valuable insights into executive functions, emotional regulation, and frontal lobe abnormalities. It is particularly useful in the evaluation of conditions such as attention deficit hyperactivity disorder (ADHD), frontal lobe epilepsy, and mood disorders.",
 #     'EEG CZ': "CZ is an EEG electrode placed at the midline of the scalp, between C3 and C4. It records electrical signals from the central-parietal region, encompassing the sensorimotor and somatosensory cortices. The CZ electrode is crucial for monitoring motor control, sensory integration, and somatosensory processing. It plays a significant role in assessing abnormalities or changes in sensorimotor functions and can contribute to the evaluation and treatment of conditions such as movement disorders, sensory processing disorders, and central seizures.",
 #     'EEG PZ': "PZ is an EEG electrode positioned at the midline of the scalp, between P3 and P4. It captures electrical brain activity from the parietal-occipital region, which encompasses the parietal lobes and the posterior aspects of the occipital lobes. The PZ electrode plays a crucial role in studying visuospatial processing, attention, and sensory integration in the parietal and occipital regions. It is particularly useful for monitoring visual-spatial cognition, visual attention, and multisensory integration processes. The PZ electrode can provide valuable insights into conditions such as spatial neglect, visuospatial processing disorders, and parietal lobe epilepsy. By monitoring electrical signals from this region, it contributes to the evaluation and understanding of brain activity patterns related to visuospatial perception and attentional processes."
 # }
@@ -74,8 +74,8 @@ ELECTRODES_DESCRIPTIONS = {
     'EEG FP2': 'frontopolar, right side, cognitive processes, emotional regulation',
     'EEG F3': 'left side, frontal lobe, cognitive processes, attention, motor planning',
     'EEG F4': 'right side, frontal lobe, cognitive functions, attention, motor planning',
-    'EEG C3': 'left side, central region, motor control, movement planning, somatosensory processing',
-    'EEG C4': 'right side, central region, motor control, movement planning, somatosensory processing',
+    'EEG C3': 'left side, Central Gyrus, motor control, movement planning, somatosensory processing',
+    'EEG C4': 'right side, Central Gyrus, motor control, movement planning, somatosensory processing',
     'EEG P3': 'left side, parietal lobe, spatial awareness, attention, sensory integration',
     'EEG P4': 'right side, parietal lobe, visuospatial processing, attention, sensory integration',
     'EEG O1': 'left side, occipital lobe, visual processing, perception',
@@ -86,7 +86,7 @@ ELECTRODES_DESCRIPTIONS = {
     'EEG T4': 'right side, temporal lobe, auditory processing, language comprehension, memory',
     'EEG T5': 'left side, temporal lobe, auditory processing, language comprehension, memory',
     'EEG T6': 'right side, temporal lobe, auditory processing, language comprehension, memory',
-    'EEG FZ': 'midline, frontal-central region, cognitive processes, working memory, attention',
+    'EEG FZ': 'midline, frontal-Central Gyrus, cognitive processes, working memory, attention',
     'EEG CZ': 'midline, central-parietal region, motor control, sensory integration, somatosensory processing',
     'EEG PZ': 'midline, parietal-occipital region, visuospatial processing, attention, sensory integration'
 }
@@ -99,7 +99,7 @@ ELECTRODES_DESCRIPTIONS = {
 #     'Left Temporal Lobe': "The left temporal lobe, located on the left side of the brain, is involved in several crucial functions. It plays a critical role in auditory processing, allowing us to perceive and interpret sounds. In particular, the left temporal lobe is involved in language comprehension and production, including the understanding and generation of spoken and written language. It houses important language-related structures, such as Wernicke's area, which contributes to language processing and semantic understanding. Additionally, the left temporal lobe is involved in memory formation, including the encoding and retrieval of verbal and auditory information. EEG electrodes associated with the left temporal lobe include T3, T5, and sometimes P3.",
 #     'Right Temporal Lobe': "The right temporal lobe, positioned on the right side of the brain, shares several functions with the left temporal lobe. It is involved in auditory processing, including the perception and interpretation of sounds. While the left temporal lobe primarily handles language functions, the right temporal lobe is crucial for the processing of non-verbal auditory information, such as music and environmental sounds. It also contributes to aspects of visual-spatial processing and facial recognition. Additionally, the right temporal lobe plays a role in memory formation, particularly in the retrieval of non-verbal and visuospatial memories. EEG electrodes associated with the right temporal lobe include T4, T6, and sometimes P4.",
 #     'Occipital Lobe': "The occipital lobe, located at the back of the brain, is primarily dedicated to visual processing. It receives and processes visual information from the eyes, allowing us to perceive and interpret the world around us. The occipital lobe contains specialized regions that process different aspects of vision, such as object recognition, color perception, and motion detection. It helps us form visual representations of the environment and allows us to recognize and identify objects, faces, and visual patterns. EEG electrodes associated with the occipital lobe include O1 and O2.",
-#     'Central Region': "The central region encompasses the sensorimotor cortex, which is responsible for motor control and somatosensory processing. It plays a critical role in planning and executing voluntary movements. The central region receives sensory information related to touch, pressure, pain, and temperature, providing us with a sense of our body's position, movement, and interaction with the environment. This region is involved in the coordination and modulation of movements, integrating sensory feedback with motor commands to ensure smooth and precise execution of actions. The central region helps us manipulate objects, perform complex motor tasks, and engage in activities requiring fine motor control. EEG electrodes associated with the central region include C3, C4, CZ, and sometimes F3 and F4."
+#     'Central Gyrus': "The Central Gyrus encompasses the sensorimotor cortex, which is responsible for motor control and somatosensory processing. It plays a critical role in planning and executing voluntary movements. The Central Gyrus receives sensory information related to touch, pressure, pain, and temperature, providing us with a sense of our body's position, movement, and interaction with the environment. This region is involved in the coordination and modulation of movements, integrating sensory feedback with motor commands to ensure smooth and precise execution of actions. The Central Gyrus helps us manipulate objects, perform complex motor tasks, and engage in activities requiring fine motor control. EEG electrodes associated with the Central Gyrus include C3, C4, CZ, and sometimes F3 and F4."
 # }
 
 # CORTEX_REGIONS_DESCRIPTIONS = {
@@ -108,7 +108,7 @@ ELECTRODES_DESCRIPTIONS = {
 #     'Left Temporal Lobe': 'Auditory processing, language comprehension, memory formation',
 #     'Right Temporal Lobe': 'Auditory processing, non-verbal auditory information, visual-spatial processing',
 #     'Occipital Lobe': 'Visual processing, object recognition, color perception, motion detection',
-#     'Central Region': 'Motor control, somatosensory processing, motor coordination, fine motor control',
+#     'Central Gyrus': 'Motor control, somatosensory processing, motor coordination, fine motor control',
 # }
 
 CORTEX_REGIONS_DESCRIPTIONS = {
@@ -116,7 +116,7 @@ CORTEX_REGIONS_DESCRIPTIONS = {
     'Parietal Lobe': 'Sensory perception, spatial awareness, spatial cognition, movement coordination',
     'Temporal Lobe': 'Auditory processing, language comprehension, non-verbal auditory information, visual-spatial processing, and memory formation',
     'Occipital Lobe': 'Visual processing, object recognition, color perception, motion detection',
-    'Central Region': 'Motor control, somatosensory processing, motor coordination, fine motor control',
+    'Central Gyrus': 'Motor control, somatosensory processing, motor coordination, fine motor control',
 }
 
 
@@ -126,8 +126,8 @@ CORTEX_REGIONS_DESCRIPTIONS = {
 #     'EEG FP2': 'Frontal Lobe',
 #     'EEG F3': 'Frontal Lobe',
 #     'EEG F4': 'Frontal Lobe',
-#     'EEG C3': 'Central Region',
-#     'EEG C4': 'Central Region',
+#     'EEG C3': 'Central Gyrus',
+#     'EEG C4': 'Central Gyrus',
 #     'EEG P3': 'Parietal Lobe',
 #     'EEG P4': 'Parietal Lobe',
 #     'EEG O1': 'Occipital Lobe',
@@ -139,7 +139,7 @@ CORTEX_REGIONS_DESCRIPTIONS = {
 #     'EEG T5': 'Left Temporal Lobe',
 #     'EEG T6': 'Right Temporal Lobe',
 #     'EEG FZ': 'Frontal Lobe',
-#     'EEG CZ': 'Central Region',
+#     'EEG CZ': 'Central Gyrus',
 #     'EEG PZ': 'Parietal Lobe'
 # }
 
@@ -148,8 +148,8 @@ ELECTRODES_REGIONS = {
     'EEG FP2': 'Frontal Lobe',
     'EEG F3': 'Frontal Lobe',
     'EEG F4': 'Frontal Lobe',
-    'EEG C3': 'Central Region',
-    'EEG C4': 'Central Region',
+    'EEG C3': 'Central Gyrus',
+    'EEG C4': 'Central Gyrus',
     'EEG P3': 'Parietal Lobe',
     'EEG P4': 'Parietal Lobe',
     'EEG O1': 'Occipital Lobe',
@@ -161,7 +161,7 @@ ELECTRODES_REGIONS = {
     'EEG T5': 'Temporal Lobe',
     'EEG T6': 'Temporal Lobe',
     'EEG FZ': 'Frontal Lobe',
-    'EEG CZ': 'Central Region',
+    'EEG CZ': 'Central Gyrus',
     'EEG PZ': 'Parietal Lobe'
 }
 
