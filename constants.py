@@ -39,6 +39,7 @@ ALL_LABEL_DICT = {'fnsz': 0, 'gnsz': 1, 'spsz': 2, 'cpsz': 3,
 # ]
 
 CORTEX_REGIONS = [
+    'Pre-Frontal Lobe',
     'Frontal Lobe',
     'Parietal Lobe',
     'Temporal Lobe',
@@ -156,12 +157,61 @@ ELECTRODES_BROADMANN_MAPPING = {
 #     'Central Gyrus': 'Motor control, somatosensory processing, motor coordination, fine motor control',
 # }
 
+# CORTEX_REGIONS_DESCRIPTIONS = {
+#     'Frontal Lobe': 'Higher cognitive functions, executive functions, motor control, personality',
+#     'Parietal Lobe': 'Sensory perception, spatial awareness, spatial cognition, movement coordination',
+#     'Temporal Lobe': 'Auditory processing, language comprehension, non-verbal auditory information, visual-spatial processing, and memory formation',
+#     'Occipital Lobe': 'Visual processing, object recognition, color perception, motion detection',
+#     'Central Gyrus': 'Motor control, somatosensory processing, motor coordination, fine motor control',
+# }
+
+
+# Source: Wikipedia - For central gyrus, both precentral and postcentral are used. Source for postcentral gyrus:  https://www.ncbi.nlm.nih.gov/books/NBK549825/
 CORTEX_REGIONS_DESCRIPTIONS = {
-    'Frontal Lobe': 'Higher cognitive functions, executive functions, motor control, personality',
-    'Parietal Lobe': 'Sensory perception, spatial awareness, spatial cognition, movement coordination',
-    'Temporal Lobe': 'Auditory processing, language comprehension, non-verbal auditory information, visual-spatial processing, and memory formation',
-    'Occipital Lobe': 'Visual processing, object recognition, color perception, motion detection',
-    'Central Gyrus': 'Motor control, somatosensory processing, motor coordination, fine motor control',
+    'Pre-Frontal Lobe': """
+                        The basic activity of pre-frontal lobe brain region is considered to be orchestration of thoughts and actions in accordance with internal goals. Many authors have indicated an integral link between a person's will to live, personality, and the functions of the prefrontal cortex.
+                        This brain region has been implicated in executive functions, such as planning, decision making, working memory, personality expression, moderating social behavior and controlling certain aspects of speech and language. Executive function relates to abilities to differentiate among conflicting thoughts, determine good and bad, better and best, same and different, future consequences of current activities, working toward a defined goal, prediction of outcomes, expectation based on actions, and social "control" (the ability to suppress urges that, if not suppressed, could lead to socially unacceptable outcomes).
+                        The frontal cortex supports concrete rule learning. More anterior regions along the rostro-caudal axis of frontal cortex support rule learning at higher levels of abstraction.
+                        """,
+    'Frontal Lobe': """
+                    The frontal lobe is covered by the frontal cortex. The frontal cortex includes the premotor cortex and the primary motor cortex, parts of the motor cortex. The front part of the frontal cortex is covered by the prefrontal cortex. The nonprimary motor cortex is a functionally defined portion of the frontal lobe.
+                    There are four principal gyri in the frontal lobe. The precentral gyrus is directly anterior to the central sulcus, running parallel to it and contains the primary motor cortex, which controls voluntary movements of specific body parts. Three horizontally arranged subsections of the frontal gyrus are the superior frontal gyrus, the middle frontal gyrus, and the inferior frontal gyrus. The inferior frontal gyrus is divided into three parts the orbital part, the triangular part and the opercular part.
+                    The frontal lobe contains most of the dopamine neurons in the cerebral cortex. The dopaminergic pathways are associated with reward, attention, short-term memory tasks, planning, and motivation. Dopamine tends to limit and select sensory information coming from the thalamus to the forebrain.
+                    """,
+    'Parietal Lobe': """
+                    The parietal lobe integrates sensory information among various modalities, including spatial sense and navigation (proprioception), the main sensory receptive area for the sense of touch in the somatosensory cortex which is just posterior to the central sulcus in the postcentral gyrus, and the dorsal stream of the visual system. The major sensory inputs from the skin (touch, temperature, and pain receptors), relay through the thalamus to the parietal lobe.
+                    Several areas of the parietal lobe are important in language processing. The somatosensory cortex can be illustrated as a distorted figure, the cortical homunculus (Latin: "little man") in which the body parts are rendered according to how much of the somatosensory cortex is devoted to them. The superior parietal lobule and inferior parietal lobule are the primary areas of body or spatial awareness. A lesion commonly in the right superior or inferior parietal lobule leads to hemineglect.
+                    """,
+    'Temporal Lobe': """
+                    The temporal lobe is involved in processing sensory input into derived meanings for the appropriate retention of visual memory, language comprehension, and emotion association. Temporal refers to the head's temples.
+
+                    Visual memories
+                    The temporal lobe communicates with the hippocampus and plays a key role in the formation of explicit long-term memory modulated by the amygdala.
+
+                    Processing sensory input Auditory
+                    Adjacent areas in the superior, posterior, and lateral parts of the temporal lobes are involved in high-level auditory processing. The temporal lobe is involved in primary auditory perception, such as hearing, and holds the primary auditory cortex. The primary auditory cortex receives sensory information from the ears and secondary areas process the information into meaningful units such as speech and words. The superior temporal gyrus includes an area (within the lateral fissure) where auditory signals from the cochlea first reach the cerebral cortex and are processed by the primary auditory cortex in the left temporal lobe.
+
+                    Visual
+                    The areas associated with vision in the temporal lobe interpret the meaning of visual stimuli and establish object recognition. The ventral part of the temporal cortices appear to be involved in high-level visual processing of complex stimuli such as faces (fusiform gyrus) and scenes (parahippocampal gyrus). Anterior parts of this ventral stream for visual processing are involved in object perception and recognition.
+
+                    Language recognition
+                    The temporal lobe holds the primary auditory cortex, which is important for the processing of semantics in both language and vision in humans. Wernicke's area, which spans the region between temporal and parietal lobes, plays a key role (in tandem with Broca's area in the frontal lobe) in language comprehension, whether spoken language or signed language. FMRI imaging shows these portions of the brain are activated by signed or spoken languages. These areas of the brain are active in children's language acquisition whether accessed via hearing a spoken language, watching a signed language, or via hand-over-hand tactile versions of a signed language.
+                    The functions of the left temporal lobe are not limited to low-level perception but extend to comprehension, naming, and verbal memory.
+
+                    New memories
+                    The medial temporal lobes (near the sagittal plane) are thought to be involved in encoding declarative long term memory. The medial temporal lobes include the hippocampi, which are essential for memory storage, therefore damage to this area can result in impairment in new memory formation leading to permanent or temporary anterograde amnesia.                
+                    """,
+    'Occipital Lobe': """
+                    The occipital lobe is the visual processing center of the mammalian brain containing most of the anatomical region of the visual cortex. The primary visual cortex is Brodmann area 17, commonly called V1 (visual one). Human V1 is located on the medial side of the occipital lobe within the calcarine sulcus; the full extent of V1 often continues onto the occipital pole. V1 is often also called striate cortex because it can be identified by a large stripe of myelin, the Stria of Gennari. Visually driven regions outside V1 are called extrastriate cortex. There are many extrastriate regions, and these are specialized for different visual tasks, such as visuospatial processing, color differentiation, and motion perception. Bilateral lesions of the occipital lobe can lead to cortical blindness.    
+                    """,
+    'Central Gyrus': """
+                    Contains both the precentral gyrus and postcentral gyrus.
+                    precentral gyrus: 
+                    The precentral gyrus is specialised for sending signals down to the spinal cord for movement. As they travel down through the cerebral white matter, the motor axons move closer together and form part of the posterior limb of the internal capsule. They continue down into the brainstem, where some of them, after crossing over to the contralateral side, distribute to the cranial nerve motor nuclei. (Note: a few motor fibers synapse with lower motor neurons on the same side of the brainstem). After crossing over to the contralateral side in the medulla oblongata (pyramidal decussation), the axons travel down the spinal cord as the lateral corticospinal tract. Fibers that do not cross over in the brainstem travel down the separate ventral corticospinal tract and most of them cross over to the contralateral side in the spinal cord, shortly before reaching the lower motor neurons.
+
+                    postcentral gyrus:
+                    The postcentral gyrus is found on the lateral surface of the anterior parietal lobe, caudal to the central sulcus, and corresponds to Brodmann areas 3b, 1, and 2. The primary somatosensory cortex perceives sensations on the contralateral side. The topographic organization of this region is known as the sensory homunculus, or “little man.” This organization of the somatosensory map is such that the medial aspect is responsible for lower extremity sensation, the dorsolateral aspect is responsible for the upper extremity, and the most lateral aspect is responsible for the face, lips, and tongue. However, regions of the homunculus that require high sensory acuity and resolution take up a larger area on the somatosensory map. For example, the hands, face, and lips necessitate fine somatosensory perception relative to other regions, such as the leg or torso. The postcentral gyrus also houses the secondary somatosensory cortex, which appears to play a role in the integration of somatosensory stimuli and memory formation.
+                    """,
 }
 
 
@@ -189,8 +239,8 @@ CORTEX_REGIONS_DESCRIPTIONS = {
 # }
 
 ELECTRODES_REGIONS = {
-    'EEG FP1': 'Frontal Lobe',
-    'EEG FP2': 'Frontal Lobe',
+    'EEG FP1': 'Pre-Frontal Lobe',
+    'EEG FP2': 'Pre-Frontal Lobe',
     'EEG F3': 'Frontal Lobe',
     'EEG F4': 'Frontal Lobe',
     'EEG C3': 'Central Gyrus',
@@ -224,7 +274,7 @@ META_NODE_INDICES = list(meta_node_indices.values())
 
 
 
-
+# Source: http://www.stresstherapysolutions.com/uploads/Brodmann-Detail-Genardi.pdf
 BROADMANN_AREA_DESCRIPTIONS = {
     'BA10 Left': """
                 Part of the prefrontal cortex - Middle frontal gyrus

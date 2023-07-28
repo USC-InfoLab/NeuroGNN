@@ -35,7 +35,7 @@ import pickle
 import scipy.sparse as sp
 import wandb
 from sentence_transformers import SentenceTransformer
-from constants import ELECTRODES_DESCRIPTIONS, CORTEX_REGIONS_DESCRIPTIONS
+from constants import CORTEX_REGIONS_DESCRIPTIONS, ELECTRODES_BROADMANN_MAPPING, BROADMANN_AREA_DESCRIPTIONS
 
 MASK = 0.
 LARGE_NUM = 1e9
@@ -535,6 +535,23 @@ def compute_regression_loss(
         return masked_mae_loss(y_predicted, y_true, mask_val=mask_val)
     else:
         return masked_mse_loss(y_predicted, y_true, mask_val=mask_val)
+    
+    
+def get_electrode_descriptions(electrode_brodmann_map, brodmann_area_descrips):
+    """map electrode names to brodmann areas descriptions and return a dictionary for electrode descriptions
+    
+    Args:
+        electrode_brodmann_map (dict): electrode to brodmann area mapping
+        brodmann_area_descrips (dict): brodmann area descriptions
+            
+    Returns:
+        dict: electrode descriptions
+    """
+    electrode_descriptions = dict()
+    for electrode, brodmann_area in electrode_brodmann_map.items():
+        electrode_descriptions[electrode] = brodmann_area_descrips[brodmann_area]
+    return electrode_descriptions
+    
 
 
 def get_semantic_embeds():
@@ -542,7 +559,8 @@ def get_semantic_embeds():
     llm = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
     
     descriptions = []
-    for node, descp in ELECTRODES_DESCRIPTIONS.items():
+    node_descriptions = get_electrode_descriptions(ELECTRODES_BROADMANN_MAPPING, BROADMANN_AREA_DESCRIPTIONS)
+    for node, descp in node_descriptions.items():
         descp = f'This node represents electrode {node.split()[1]} recordings. {descp}'
         descriptions.append(descp)
     for node, descp in CORTEX_REGIONS_DESCRIPTIONS.items():
