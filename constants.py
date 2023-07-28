@@ -69,26 +69,71 @@ CORTEX_REGIONS = [
 #     'EEG PZ': "PZ is an EEG electrode positioned at the midline of the scalp, between P3 and P4. It captures electrical brain activity from the parietal-occipital region, which encompasses the parietal lobes and the posterior aspects of the occipital lobes. The PZ electrode plays a crucial role in studying visuospatial processing, attention, and sensory integration in the parietal and occipital regions. It is particularly useful for monitoring visual-spatial cognition, visual attention, and multisensory integration processes. The PZ electrode can provide valuable insights into conditions such as spatial neglect, visuospatial processing disorders, and parietal lobe epilepsy. By monitoring electrical signals from this region, it contributes to the evaluation and understanding of brain activity patterns related to visuospatial perception and attentional processes."
 # }
 
-ELECTRODES_DESCRIPTIONS = {
-    'EEG FP1': 'frontopolar, left side, cognitive processes, attention, decision-making',
-    'EEG FP2': 'frontopolar, right side, cognitive processes, emotional regulation',
-    'EEG F3': 'left side, frontal lobe, cognitive processes, attention, motor planning',
-    'EEG F4': 'right side, frontal lobe, cognitive functions, attention, motor planning',
-    'EEG C3': 'left side, Central Gyrus, motor control, movement planning, somatosensory processing',
-    'EEG C4': 'right side, Central Gyrus, motor control, movement planning, somatosensory processing',
-    'EEG P3': 'left side, parietal lobe, spatial awareness, attention, sensory integration',
-    'EEG P4': 'right side, parietal lobe, visuospatial processing, attention, sensory integration',
-    'EEG O1': 'left side, occipital lobe, visual processing, perception',
-    'EEG O2': 'right side, occipital lobe, visual processing, perception',
-    'EEG F7': 'left frontotemporal, language processing, memory, emotion',
-    'EEG F8': 'right frontotemporal, language processing, memory, emotional regulation',
-    'EEG T3': 'left side, temporal lobe, auditory processing, language comprehension, memory',
-    'EEG T4': 'right side, temporal lobe, auditory processing, language comprehension, memory',
-    'EEG T5': 'left side, temporal lobe, auditory processing, language comprehension, memory',
-    'EEG T6': 'right side, temporal lobe, auditory processing, language comprehension, memory',
-    'EEG FZ': 'midline, frontal-Central Gyrus, cognitive processes, working memory, attention',
-    'EEG CZ': 'midline, central-parietal region, motor control, sensory integration, somatosensory processing',
-    'EEG PZ': 'midline, parietal-occipital region, visuospatial processing, attention, sensory integration'
+# ELECTRODES_DESCRIPTIONS = {
+#     'EEG FP1': 'frontopolar, left side, cognitive processes, attention, decision-making',
+#     'EEG FP2': 'frontopolar, right side, cognitive processes, emotional regulation',
+#     'EEG F3': 'left side, frontal lobe, cognitive processes, attention, motor planning',
+#     'EEG F4': 'right side, frontal lobe, cognitive functions, attention, motor planning',
+#     'EEG C3': 'left side, Central Gyrus, motor control, movement planning, somatosensory processing',
+#     'EEG C4': 'right side, Central Gyrus, motor control, movement planning, somatosensory processing',
+#     'EEG P3': 'left side, parietal lobe, spatial awareness, attention, sensory integration',
+#     'EEG P4': 'right side, parietal lobe, visuospatial processing, attention, sensory integration',
+#     'EEG O1': 'left side, occipital lobe, visual processing, perception',
+#     'EEG O2': 'right side, occipital lobe, visual processing, perception',
+#     'EEG F7': 'left frontotemporal, language processing, memory, emotion',
+#     'EEG F8': 'right frontotemporal, language processing, memory, emotional regulation',
+#     'EEG T3': 'left side, temporal lobe, auditory processing, language comprehension, memory',
+#     'EEG T4': 'right side, temporal lobe, auditory processing, language comprehension, memory',
+#     'EEG T5': 'left side, temporal lobe, auditory processing, language comprehension, memory',
+#     'EEG T6': 'right side, temporal lobe, auditory processing, language comprehension, memory',
+#     'EEG FZ': 'midline, frontal-Central Gyrus, cognitive processes, working memory, attention',
+#     'EEG CZ': 'midline, central-parietal region, motor control, sensory integration, somatosensory processing',
+#     'EEG PZ': 'midline, parietal-occipital region, visuospatial processing, attention, sensory integration'
+# }
+
+# ELECTRODES_BROADMANN_MAPPING = {
+#     'EEG FP1': [10, 11, 46],
+#     'EEG FP2': [10, 11, 46],
+#     'EEG F3': [8, 9, 46],
+#     'EEG F4': [8, 9, 46],
+#     'EEG C3': [3, 1, 4],
+#     'EEG C4': [3, 1, 4],
+#     'EEG P3': [7, 40, 19],
+#     'EEG P4': [7, 40, 19],
+#     'EEG O1': [18, 19, 17],
+#     'EEG O2': [18, 19, 17],
+#     'EEG F7': [45, 47, 46],
+#     'EEG F8': [45, 47, 46],
+#     'EEG T3': [42, 22, 21],
+#     'EEG T4': [42, 22, 21],
+#     'EEG T5': [39, 37, 19],
+#     'EEG T6': [39, 37, 19],
+#     'EEG FZ': [8, 6, 9],
+#     'EEG CZ': [6, 4, 3],
+#     'EEG PZ': [7, 5, 19]
+# }
+
+
+ELECTRODES_BROADMANN_MAPPING = {
+    'EEG FP1': 'BA10 Left',
+    'EEG FP2': 'BA10 Right',
+    'EEG F3': 'BA9 Left',
+    'EEG F4': 'BA9 Right',
+    'EEG C3': 'BA1 Left',
+    'EEG C4': 'BA1 Right',
+    'EEG P3': 'BA39 Left',
+    'EEG P4': 'BA39 Right',
+    'EEG O1': 'BA18 Left',
+    'EEG O2': 'BA18 Right',
+    'EEG F7': 'BA45 Left',
+    'EEG F8': 'BA45 Right',
+    'EEG T3': 'BA42/22 Left',
+    'EEG T4': 'BA42/22 Right',
+    'EEG T5': 'BA19 Left',
+    'EEG T6': 'BA19 Right',
+    'EEG FZ': 'BA6 Left',
+    'EEG CZ': 'BA4 Right',
+    'EEG PZ': 'BA7 Left'
 }
 
 
@@ -176,3 +221,683 @@ for i, node in enumerate(INCLUDED_CHANNELS):
     meta_node_indices[cortex_region].append(i)
 
 META_NODE_INDICES = list(meta_node_indices.values())
+
+
+
+
+BROADMANN_AREA_DESCRIPTIONS = {
+    'BA10 Left': """
+                Part of the prefrontal cortex - Middle frontal gyrus
+                Memory:
+                Working memory
+                Spatial memory
+                Memory encoding and recognition
+                Memory retrieval
+                Event- and time-based prospective memory
+                Prospective memory
+                Intentional forgetting
+
+                Language:
+                Syntactic processing
+                Metaphor comprehension
+                Word-stem completion
+                Verb generation
+
+                Auditory:
+                Nonspeech processing (monaural stimulus)
+
+                Other:
+                Processing emotional stimuli
+                Processing emotions and self-reflections in decision making
+                Calculation / numerical processes
+                Intention/sensory feedback conflict detection
+                Pleasant and unpleasant emotions
+                Response to painful thermal stimuli
+                Joint attention
+                """,
+    'BA10 Right': """
+                Part of the prefrontal cortex - Middle frontal gyrus
+                Memory:
+                Working memory
+                Spatial memory
+                Memory encoding and recognition
+                Memory retrieval
+                Event- and time-based prospective memory
+                Prospective memory
+                Intentional forgetting
+
+                Auditory:
+                Nonspeech processing (monaural stimulus)
+
+                Other:
+                Processing emotional stimuli
+                Decision making (involving conflict and reward)
+                Calculation / numerical processes
+                Intention/sensory feedback conflict detection
+                Smelling familiar odors
+                Pleasant and unpleasant emotions
+                Response to painful thermal stimuli
+                Joint attention
+                """,
+    'BA9 Left': """
+                Part of the prefrontal cortex - Middle frontal gyrus
+                Memory:
+                Working memory
+                Spatial memory
+                Short-term memory
+                Memory encoding and recognition
+                Memory retrieval
+                Recency judgments
+
+                Motor:
+                Executive control of behavior
+
+                Language:
+                Syntactic processing
+                Metaphor comprehension
+                Verbal fluency
+                Semantic categorization
+                Word-stem completion
+                Generating sentences
+
+                Other:
+                Error processing/detection
+                Attention to human voices
+                Processing emotional stimuli
+                Processing emotions and self-reflections in decision making
+                Inferential reasoning
+                Calculation / numerical processes
+                Attribution of intention to others
+                Intention/sensory feedback conflict detection
+                Pleasant and unpleasant emotions
+                """,
+    'BA9 Right': """
+                Part of the prefrontal cortex - Middle frontal gyrus
+                Memory:
+                Working memory
+                Spatial memory
+                Short-term memory
+                Memory encoding and recognition
+                Memory retrieval
+                Recency judgments
+
+                Motor:
+                Executive control of behavior
+
+
+                Other:
+                Error processing/detection
+                Attention to human voices
+                Processing emotional stimuli
+                Inferential reasoning
+                Planning
+                Calculation / numerical processes
+                Attribution of intention to others
+                Intention/sensory feedback conflict detection
+                Smelling familiar odors
+                Pleasant and unpleasant emotions
+                """,
+    'BA1 Left': """
+                Primary somatosensory cortex - Postcentral gyrus
+                Somatosensory:
+                Localization of touch
+                Localization of temperature
+                Localization of vibration
+                Localization of pain
+                Finger proprioception
+                Voluntary hand movement
+                Volitional swallowing
+                Skillful coordinated orofacial movement (i.e. whistling)
+
+                Other
+                Somatosensory mirror neuron system
+                Touch anticipation (i.e. tickling)
+                Mirror neurons for speech perception
+                Motor learning
+                """,
+    'BA1 Right': """
+                Primary somatosensory cortex - Postcentral gyrus
+                Somatosensory:
+                Localization of touch
+                Localization of temperature
+                Localization of vibration
+                Localization of pain
+                Finger proprioception
+                Voluntary hand movement
+                Volitional swallowing
+                Skillful coordinated orofacial movement (i.e. whistling)
+
+                Other
+                Somatosensory mirror neuron system
+                Touch anticipation (i.e. tickling)
+                Mirror neurons for speech perception
+                Motor learning
+                """,
+    'BA39 Left': """
+                Part of inferior parietal lobule - Caudal bank of intraparietal sulcus -
+                Angular gyrus
+                Part of Wernicke's area
+                Language:
+                Sentence generation
+                Reading
+
+                Calculation:
+                Calculation
+                Arithmetic learning
+                Abstract coding of numerical magnitude
+
+                Visual:
+                Spatial focusing of attention
+
+                Other:
+                Performingverbal creative tasks
+                Theory of mind
+                Executive control of behavior
+                Processing a sequence of actions
+                """,
+    'BA39 Right': """
+                Part of inferior parietal lobule - Caudal bank of intraparietal sulcus -
+                Angular gyrus
+                Part of Wernicke's area
+                Language:
+                Sentence generation
+                Reading
+
+                Visual:
+                Spatial focusing of attention
+                Visuospatial processing
+
+                Other:
+                Theory of mind
+                Executive control of behavior
+                Sight reading (music)
+                """,
+    'BA18 Left': """ 
+                Secondary visual cortex - Middle occipital gyrus
+                Visual:
+                Detection of light intensity
+                Detection of patterns
+                Tracking visual motion patterns (optokinetic stimulation)
+                Discrimination of finger gestures
+                Sustained attention to color and shape
+                Feature-based attention
+                Orientation-selective attention
+
+                Memory:
+                Visual priming
+                Word and face encoding
+
+                Language:
+                Response to visual word form
+                Confrontation naming
+
+                Other:
+                Face-name association
+                Horizontal saccadic eye movements
+                Visual mental imagery
+                """,
+    'BA18 Right': """
+                Secondary visual cortex - Middle occipital gyrus
+                Visual:
+                Detection of light intensity
+                Detection of patterns
+                Tracking visual motion patterns (optokinetic stimulation)
+                Discrimination of finger gestures
+                Sustained attention to color and shape
+                Visuo-spatial information processing
+                Feature-based attention
+                Orientation-selective attention
+
+                Memory:
+                Visual priming
+                Word and face encoding
+
+                Language:
+                Confrontation naming
+
+                Other:
+                Horizontal saccadic eye movements
+                Response to emotion/attention in visual processing
+                """,
+    'BA45 Left': """
+                Broca's Area
+                Inferior frontal gyrus - Pars triangularis
+                Language:
+                Semantic and phonological processing
+                Internally specified word generation
+                Verbal fluency
+                Lexical search
+                Phonological processing
+                Grammatical processing
+                Semantic memory retrieval
+                Selective attention to speech
+                Sign language
+                Lexical inflection
+                Reasoning processes
+                Processing of metaphors
+
+                Memory:
+                Working memory
+                Non-verbal working memory (bilaterally)
+                Episodic long-term memory
+                Declarative memory encoding
+                Recall of digit series
+
+                Motor:
+                Mirror neurons for expressive movements
+                Mirror neurons for grasping movements
+                Response inhibition
+
+                Other:
+                Mental rotation (mostly in females)
+                Word and face encoding
+                Aesthetic appreciation
+                Music enjoyment
+                Generation of melodic phrases
+                Modulating emotional response
+                Smelling familiar odors
+                """,
+    'BA45 Right': """
+                Broca's Area
+                Inferior frontal gyrus - Pars triangularis
+                Language:
+                Semantic and phonological processing
+                Internally specified word generation
+                Verbal fluency
+                Lexical search
+                Phonological processing
+                Grammatical processing
+                Semantic memory retrieval
+                Sign language
+                Affective prosody comprehension
+                Reasoning processes
+                Processing of metaphors
+
+                Memory:
+                Working memory
+                Non-verbal working memory (bilaterally)
+                Episodic long-term memory
+                Declarative memory encoding
+                Recall of digit series
+
+                Motor:
+                Mirror neurons for expressive movements
+                Mirror neurons for grasping movements
+                Response inhibition
+
+                Other:
+                Mental rotation (mostly in females)
+                Word and face encoding
+                Aesthetic appreciation
+                Music enjoyment
+                Modulating emotional response
+                """,
+    'BA42/22 Left': """ 
+                    Primary auditory cortex - Heschl's gyrus
+                    Superior Temporal Gyrus - Part of Wernicke's area
+
+                    Auditory:
+                    Basic processing of auditory stimuli (speech and non-speech)
+                    Processing discontinued acoustic patterns
+                    Frequency deviant detection
+                    Perception of harmonic tones
+                    Processing sound intensity
+                    Sensitivity to pitch
+                    Rapid sound detection (Bilateral)
+                    Sound (vowel) segregation
+                    Auditory priming
+                    Processing complex sounds
+                    Lexico-semantic access to melodic representations (Anterior)
+
+                    Receptive language:
+                    Auditory language processing
+                    Semantic processing
+                    Sentence generation
+                    Frequency deviant detection
+                    Internally-specified word generation
+
+                    Language-related:
+                    Selective attention to speech
+                    Learning a tone-based second language
+                    Repeating words
+
+                    Memory:
+                    Repetition priming effect
+                    Auditory working memory
+
+                    Other:
+                    Visual speech perception (mirror neurons?)
+                    Attribution of intentions to others
+                    Deductive reasoning
+                    """,
+    'BA42/22 Right': """
+                    Primary auditory cortex - Heschl's gyrus
+                    Superior Temporal Gyrus - Part of Wernicke's area
+                    Auditory:
+                    Basic processing of auditory stimuli (speech and non-speech)
+                    Processing discontinued acoustic patterns
+                    Frequency deviant detection
+                    Perception of harmonic tones
+                    Processing sound intensity
+                    Sensitivity to pitch
+                    Rapid sound detection (Bilateral)
+                    Sound (vowel) segregation
+                    Auditory priming
+                    Nonverbal sounds processing
+                    Processing complex sounds
+                    Lexico-semantic access to melodic representations (Anterior)
+
+                    Receptive language:
+                    Sentence generation
+                    Frequency deviant detection
+
+                    Language-related:
+                    Selective attention to speech
+                    Affective prosody comprehension
+                    Repeating words
+
+                    Visual:
+                    Remembered saccades
+
+                    Memory:
+                    Repetition priming effect
+                    Auditory working memory
+
+                    Other:
+                    Visual speech perception (mirror neurons?)
+                    Attribution of intentions to others
+                    Deductive reasoning
+                    """,
+    'BA19 Left': """
+                Secondary visual cortex - Inferior occipital gyrus
+
+                Visual:
+                Detection of light intensity
+                Detection of patterns
+                Tracking visual motion patterns
+                Discrimination of finger gestures
+                Sustained attention to color and shape
+                Feature-based attention
+                Orientation-selective attention
+
+                Memory:
+                Visual priming
+                Visual memory recognition
+                Word and face encoding
+                Spatial working memory
+
+                Language:
+                Processing phonological properties of words (word form?)
+                Confrontation naming
+                Sign language
+
+                Other:
+                Horizontal saccadic eye movements
+                Visual mental imagery
+                Inferential reasoning
+                Visual mental imagery
+                """,
+    'BA19 Right': """
+                Secondary visual cortex - Inferior occipital gyrus
+                Visual:
+                Detection of light intensity
+                Visuo-spatial information processing
+                Detection of patterns
+                Tracking visual motion patterns
+                Discrimination of finger gestures
+                Sustained attention to color and shape
+                Feature-based attention
+                Orientation-selective attention
+
+                Memory:
+                Visual priming
+                Visual memory recognition
+                Word and face encoding
+                Spatial working memory
+
+                Language:
+                Processing phonological properties of words (word form?)
+                Confrontation naming
+                Sign language
+
+                Other:
+                Face-name association
+                Horizontal saccadic eye movements
+                Visual mental imagery
+                """,
+    'BA6 Left': """
+                Premotor cortex or Lateral Premotor Area (PMA)
+                Also includes Supplementary Motor Area (SMA)
+
+                Motor:
+                Motor sequencing/planning
+                Motor learning (SMA)
+                Movement preparation/imagined movement (Rostral SMA)
+                Movement initiation (Caudal SMA)
+                Motor imagery (SMA)
+                Volitional control of breathing
+                Horizontal saccadic eye movements
+                Laughter/smiling (SMA)
+                Interlimb coordination
+
+                Language:
+                Speech motor programming
+                Language processing (SMA)
+                Language switching
+                Reading novel words (aloud and silently)
+                Speech perception
+                Updating verbal information (Medial)
+                Phonological processing
+                Object naming
+                Lipreading (SMA)
+                Word retrieval
+                Lexical decision on words and pseudowords
+                Syntactical processing
+
+                Memory:
+                Working memory
+                Mnemonic rehearsal
+                Episodic long-term memory
+                Topographic memory
+
+                Attention:
+                Visuospatial attention
+                Visuomotor attention
+                Response to visual presentation of letters and pseudoletters
+                Updating spatial information (Lateral)
+                Visual guided eye movements (frontal eye fields)
+                Selective attention to rhythm/processing sequential sounds
+                Attention to human voices
+
+                Other:
+                Observation of actions (Mirror neurons)
+                Planning/solving novel problems
+                Executive control of behavior
+                Reponse to baroreceptor stimulation
+                Generating melodic phrases
+                Deductive reasoning
+                Formation of qualatative representations
+                Processing emotions and self-reflections in decision making
+                Calculation
+                Temporal context recognition
+                Frequency deviant detection
+                """,
+    'BA6 Right': """ 
+                Premotor cortex or Lateral Premotor Area (PMA)
+                Also includes Supplementary Motor Area (SMA)
+
+                Motor:
+                Motor sequencing/planning
+                Motor learning (SMA)
+                Movement preparation/imagined movement (Rostral SMA)
+                Movement initiation (Caudal SMA)
+                Motor imagery (SMA)
+                Volitional control of breathing
+                Horizontal saccadic eye movements
+                Laughter/smiling (SMA)
+                Interlimb coordination
+
+                Language:
+                Language processing (SMA)
+                Language switching
+                Speech perception
+                Updating verbal information (Medial)
+                Lipreading (SMA)
+                Word retrieval
+                Lexical decision on words and pseudowords
+                Syntactical processing
+
+                Memory:
+                Working memory
+                Mnemonic rehearsal
+                Episodic long-term memory
+                Topographic memory
+
+                Attention:
+                Visuospatial attention
+                Visuomotor attention
+                Updating spatial information (Lateral)
+                Visual guided eye movements (frontal eye fields)
+                Attention to human voices
+
+                Other:
+                Observation of actions (Mirror neurons)
+                Planning/solving novel problems
+                Executive control of behavior
+                Reponse to baroreceptor stimulation
+                Generating melodic phrases
+                Response to strong odorant
+                Formation of qualatative representations
+                Same-different discrimination
+                Calculation
+                Temporal context recognition
+                Frequency deviant detection
+                """,
+    'BA4 Left': """ 
+                Primary motor cortex - Precentral gyrus
+
+                Motor:
+                Contralateral finger, hand, and wrist movements (Dorsal)
+                Contralateral lip, tongue, face, and mouth movement (Lateral)
+                Swallowing / laryngial movement
+                Contralateral lower limb (knee, ankle, foot, toe) movement (Mesial)
+                Motor imagery
+                Learning motor sequences
+                Volitional breathing control
+                Control of rhythmic motor tasks (i.e. bicycling)
+                Inhibition of blinking / voluntary blinking
+                Horizontal saccadic eye movements
+
+                Somatosensory:
+                Kinesthetic perception of limb movements
+                Vibrotactile frequency discrimination
+                Finger proprioception
+                Thermal hyperalgesia (contralateral)
+                Response to touch/observed touch
+
+                Other:
+                Attention to action (posterior)
+                Topographic memory (motor memory) for visual landmarks
+                """,
+    'BA4 Right': """ 
+                Primary motor cortex - Precentral gyrus
+
+                Motor:
+                Contralateral finger, hand, and wrist movements (Dorsal)
+                Contralateral lip, tongue, face, and mouth movement (Lateral)
+                Swallowing / laryngial movement
+                Contralateral lower limb (knee, ankle, foot, toe) movement (Mesial)
+                Motor imagery
+                Learning motor sequences
+                Volitional breathing control
+                Control of rhythmic motor tasks (i.e. bicycling)
+                Inhibition of blinking / voluntary blinking
+                Horizontal saccadic eye movements
+
+                Somatosensory:
+                Kinesthetic perception of limb movements
+                Vibrotactile frequency discrimination
+                Finger proprioception
+                Thermal hyperalgesia (contralateral)
+
+                Other:
+                Verbal encoding during a non-semantic process
+                Attention to action (posterior)
+                Topographic memory (motor memory) for visual landmarks
+                """,
+    'BA7 Left': """ 
+                Secondary sensorimotor cortex - Secondary association sensorimotor cortex
+                Superior parietal lobule
+
+                Motor:
+                Motor imagery
+                Processing tool-use gestures
+                Motor execution
+                Mirror neurons
+                Bimanual manipulation
+                Saccadic eye movement
+
+                Memory:
+                Working memory (motor, visual, auditory, emotional, verbal)
+                Conscious recollection of previously experienced events
+
+                Sensory:
+                Tactile localization ("where stream")
+                Pain perception
+
+                Attention:
+                Visuomotor attention
+
+                Language:
+                Language processing
+                Literal sentence comprehension
+                Word comprehension (imageability)
+                Attention to phonological relations
+
+                Other:
+                Processing emotions and self-reflections during decision making
+                Goal-intensive processing
+                Temporal context recognition
+                """,
+    'BA7 Right': """
+                Secondary sensorimotor cortex - Secondary association sensorimotor cortex
+                Superior parietal lobule
+
+                Visuospatial processing:
+                Mental rotation
+                Stereopsis
+                Perception of personal space
+                Line bisection judgments
+                Processing chaotic patterns
+                Using spatial imagery in deductive reasoning
+
+                Motor:
+                Motor imagery
+                Motor execution
+                Mirror neurons
+                Bimanual manipulation
+                Saccadic eye movement
+
+                Memory:
+                Working memory (motor, visual, auditory, emotional, verbal)
+                Visuospatial memory
+                Conscious recollection of previously experienced events
+
+                Sensory:
+                Tactile localization ("where stream")
+                Pain perception
+
+                Attention:
+                Visuomotor attention
+
+                Language:
+                Language processing
+                Literal sentence comprehension
+                Word comprehension (imageability)
+                Attention to phonological relations
+
+                Other:
+                Processing emotions and self-reflections during decision making
+                Goal-intensive processing
+                """,
+}
