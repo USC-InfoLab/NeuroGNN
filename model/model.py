@@ -367,7 +367,7 @@ class DCRNNModel_nextTimePred(nn.Module):
 
 ########## NeuroGNN Classes ##########  
 class NeuroGNN_GraphConstructor(nn.Module):
-    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=5,
+    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=6,
                  semantic_embs=None, semantic_embs_dim=128,
                  dropout_rate=0.5, leaky_rate=0.2,
                  device='cpu', gru_dim=256, num_heads=8,
@@ -694,7 +694,7 @@ class NeuroGNN_GNN_GCN(nn.Module):
     
 
 class NeuroGNN_Encoder(nn.Module):
-    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=5,
+    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=6,
                  semantic_embs=None, semantic_embs_dim=256,
                  dropout_rate=0.5, leaky_rate=0.2,
                  device='cpu', gru_dim=256, num_heads=8,
@@ -838,7 +838,7 @@ class NeuroGNN_Classification(nn.Module):
 
 ########## Model for next time prediction ##########
 class NeuroGNN_nextTimePred(nn.Module):
-    def __init__(self, args, device=None, dist_adj=None, initial_sem_embeds=None, meta_nodes_num=5):
+    def __init__(self, args, device=None, dist_adj=None, initial_sem_embeds=None, meta_nodes_num=6):
         super(NeuroGNN_nextTimePred, self).__init__()
 
         num_nodes = args.num_nodes
