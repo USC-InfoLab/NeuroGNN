@@ -36,6 +36,8 @@ import scipy.sparse as sp
 import wandb
 from sentence_transformers import SentenceTransformer
 from constants import CORTEX_REGIONS_DESCRIPTIONS, ELECTRODES_BROADMANN_MAPPING, BROADMANN_AREA_DESCRIPTIONS
+from collections import defaultdict
+
 
 MASK = 0.
 LARGE_NUM = 1e9
@@ -573,3 +575,82 @@ def get_semantic_embeds():
     return embeddings
 
     
+def get_meta_node_indices(electrodes_regions):
+    meta_node_indices = defaultdict(list)
+
+    for i, (node, region) in enumerate(electrodes_regions.items()):
+        meta_node_indices[region].append(i)
+
+    return dict(meta_node_indices)
+
+
+def get_adjacency_matrix(distance_df, sensor_ids, dist_k=0.9):
+    """
+    Args:
+        distance_df: data frame with three columns: [from, to, distance].
+        sensor_ids: list of sensor ids.
+        dist_k: threshold for graph sparsity
+    Returns:
+        adj_mx: adj
+    """
+    num_sensors = len(sensor_ids)
+    dist_mx = np.zeros((num_sensors, num_sensors), dtype=np.float32)
+    dist_mx[:] = np.inf
+    # Builds sensor id to index map.
+    sensor_id_to_ind = {}
+    for i, sensor_id in enumerate(sensor_ids):
+        sensor_id_to_ind[sensor_id] = i
+
+    # Fills cells in the matrix with distances.
+    for row in distance_df.values:
+        if row[0] not in sensor_id_to_ind or row[1] not in sensor_id_to_ind:
+            continue
+        dist_mx[sensor_id_to_ind[row[0]], sensor_id_to_ind[row[1]]] = row[2]
+
+    # Calculates the standard deviation as theta.
+    distances = dist_mx[~np.isinf(dist_mx)].flatten()
+    std = distances.std()
+
+    # Sets entries that lower than a threshold, i.e., k, to zero for sparsity.    
+    adj_mx = np.exp(-np.square(dist_mx / std))
+    adj_mx[dist_mx > dist_k] = 0
+   
+    return adj_mx, sensor_id_to_ind, dist_mx
+
+
+def get_extended_adjacency_matrix(distance_df, sensor_ids, electrodes_regions, dist_k=0.9):
+    adj_mat, sensor_id_to_ind, dist_mx = get_adjacency_matrix(distance_df, sensor_ids, dist_k)
+
+    # map the sensor_id_to_ind to regions
+    region_to_indices = get_meta_node_indices(electrodes_regions)
+
+    # Get the number of regions and initialize a matrix for the meta nodes
+    num_regions = len(region_to_indices)
+    num_sensors = len(sensor_ids)
+    meta_dist_mx = np.zeros((num_sensors + num_regions, num_sensors + num_regions))
+
+    # Copy the original distance matrix to the extended matrix
+    meta_dist_mx[:num_sensors, :num_sensors] = dist_mx
+
+    # Calculate the mean distance for each region and add it to the matrix
+    for region, indices in region_to_indices.items():
+        region_index = num_sensors + list(region_to_indices.keys()).index(region)
+
+        for i in range(num_sensors):
+            meta_dist_mx[i, region_index] = dist_mx[i, indices].mean()
+            meta_dist_mx[region_index, i] = dist_mx[indices, i].mean()
+
+        for other_region, region_indices_j in region_to_indices.items():
+            if other_region != region:
+                other_region_index = num_sensors + list(region_to_indices.keys()).index(other_region)
+                meta_dist_mx[region_index, other_region_index] = dist_mx[indices][:, region_indices_j].mean()
+                meta_dist_mx[other_region_index, region_index] = dist_mx[region_indices_j][:, indices].mean()
+
+    # Calculate the adjacency matrix using the Gaussian kernel and the threshold
+    distances = meta_dist_mx[~np.isinf(meta_dist_mx)].flatten()
+    std = distances.std()
+
+    meta_adj_mat = np.exp(-np.square(meta_dist_mx / std))
+    meta_adj_mat[meta_dist_mx > dist_k] = 0
+
+    return meta_adj_mat, sensor_id_to_ind, meta_dist_mx

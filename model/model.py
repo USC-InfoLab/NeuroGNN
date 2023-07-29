@@ -367,7 +367,7 @@ class DCRNNModel_nextTimePred(nn.Module):
 
 ########## NeuroGNN Classes ##########  
 class NeuroGNN_GraphConstructor(nn.Module):
-    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=7,
+    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=6,
                  semantic_embs=None, semantic_embs_dim=128,
                  dropout_rate=0.0, leaky_rate=0.2,
                  device='cpu', gru_dim=256, num_heads=8,
@@ -413,9 +413,8 @@ class NeuroGNN_GraphConstructor(nn.Module):
         
     
 
-        self.dist_adj = np.ones((nodes_num+meta_nodes_num, nodes_num+meta_nodes_num))
         if dist_adj is not None:
-            self.dist_adj[:nodes_num, :nodes_num] = dist_adj
+            self.dist_adj = dist_adj
             self.dist_adj = torch.from_numpy(self.dist_adj).to(device).float()
         
         self.att_alpha = nn.Parameter(torch.tensor(0.5), requires_grad=True)
@@ -694,7 +693,7 @@ class NeuroGNN_GNN_GCN(nn.Module):
     
 
 class NeuroGNN_Encoder(nn.Module):
-    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=7,
+    def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=6,
                  semantic_embs=None, semantic_embs_dim=128,
                  dropout_rate=0.2, leaky_rate=0.2,
                  device='cpu', gru_dim=176, num_heads=16,
@@ -848,7 +847,7 @@ class NeuroGNN_Classification(nn.Module):
 
 ########## Model for next time prediction ##########
 class NeuroGNN_nextTimePred(nn.Module):
-    def __init__(self, args, device=None, dist_adj=None, initial_sem_embeds=None, meta_nodes_num=7, conv_hidden_dim=256):
+    def __init__(self, args, device=None, dist_adj=None, initial_sem_embeds=None, meta_nodes_num=6, conv_hidden_dim=256):
         super(NeuroGNN_nextTimePred, self).__init__()
 
         num_nodes = args.num_nodes
