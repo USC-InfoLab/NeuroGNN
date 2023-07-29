@@ -569,8 +569,6 @@ def get_semantic_embeds():
         # descp = f'This is a meta-node that represents the recordings for {node} region of the cortext. {descp}'
         descriptions.append(descp)
     # global node description
-    glob_desc = 'This is a meta-node that represents the recordings for the entire cortext of the brain, representing all brain functions: motor, sensory, visual, auditory, and speech.'
-    descriptions.append(glob_desc)
     embeddings = llm.encode(descriptions)
     return embeddings
 
