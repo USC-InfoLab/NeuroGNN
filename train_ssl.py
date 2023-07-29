@@ -21,7 +21,7 @@ from model.model import NeuroGNN_nextTimePred
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from utils import WandbLogger
+from utils import WandbLogger, get_extended_adjacency_matrix
 
 
 def main(args):
@@ -77,7 +77,8 @@ def main(args):
     if args.model_name == "dcrnn":
         model = DCRNNModel_nextTimePred(device=device, args=args)
     elif args.model_name == "neurognn":
-        dist_adj = pickle.load(open('./data/electrode_graph/adj_mx_3d.pkl', "rb"))
+        distances_df = pd.read_csv('./data/electrode_graph/distances_3d.csv')
+        dist_adj, _, _ = get_extended_adjacency_matrix(distances_df, INCLUDED_CHANNELS, ELECTRODES_REGIONS)
         initial_sem_embs = utils.get_semantic_embeds()
         model = NeuroGNN_nextTimePred(args, device, dist_adj[2], initial_sem_embs)
     wandb_logger.watch_model(model)

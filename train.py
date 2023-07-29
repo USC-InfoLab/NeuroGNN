@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import os
 import pickle
 from datetime import datetime
@@ -27,7 +28,7 @@ from tqdm import tqdm
 from dotted_dict import DottedDict
 from torch.optim.lr_scheduler import CosineAnnealingLR
 import copy
-from utils import WandbLogger
+from utils import WandbLogger, get_extended_adjacency_matrix
 
 
 
@@ -126,7 +127,8 @@ def main(args):
         model = DCRNNModel_classification(
             args=args, num_classes=args.num_classes, device=device)
     elif args.model_name == "neurognn":
-        dist_adj = pickle.load(open('./data/electrode_graph/adj_mx_3d.pkl', "rb"))
+        distances_df = pd.read_csv('./data/electrode_graph/distances_3d.csv')
+        dist_adj, _, _ = get_extended_adjacency_matrix(distances_df, INCLUDED_CHANNELS, ELECTRODES_REGIONS)
         initial_sem_embs = utils.get_semantic_embeds()
         model = NeuroGNN_Classification(args, args.num_classes, device, dist_adj[2], initial_sem_embs)
     elif args.model_name == "densecnn":
