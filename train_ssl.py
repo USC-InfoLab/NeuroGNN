@@ -80,7 +80,7 @@ def main(args):
         distances_df = pd.read_csv('./data/electrode_graph/distances_3d.csv')
         dist_adj, _, _ = get_extended_adjacency_matrix(distances_df, INCLUDED_CHANNELS, ELECTRODES_REGIONS)
         initial_sem_embs = utils.get_semantic_embeds()
-        model = NeuroGNN_nextTimePred(args, device, dist_adj[2], initial_sem_embs)
+        model = NeuroGNN_nextTimePred(args, device, dist_adj, initial_sem_embs)
     wandb_logger.watch_model(model)
 
     num_params = utils.count_parameters(model)
