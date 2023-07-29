@@ -561,12 +561,14 @@ def get_semantic_embeds():
     descriptions = []
     node_descriptions = get_electrode_descriptions(ELECTRODES_BROADMANN_MAPPING, BROADMANN_AREA_DESCRIPTIONS)
     for node, descp in node_descriptions.items():
-        descp = f'This node represents electrode {node.split()[1]} recordings. {descp}'
+        # descp = f'This node represents electrode {node.split()[1]} recordings. {descp}'
         descriptions.append(descp)
     for node, descp in CORTEX_REGIONS_DESCRIPTIONS.items():
-        descp = f'This is a meta-node that represents the recordings for {node} region of the cortext. {descp}'
+        # descp = f'This is a meta-node that represents the recordings for {node} region of the cortext. {descp}'
         descriptions.append(descp)
-
+    # global node description
+    glob_desc = 'This is a meta-node that represents the recordings for the entire cortext of the brain, representing all brain functions: motor, sensory, visual, auditory, and speech.'
+    descriptions.append(glob_desc)
     embeddings = llm.encode(descriptions)
     return embeddings
 

@@ -182,12 +182,16 @@ def main(args):
         model = model.to(device)
 
         # Train
-        train(model, dataloaders, args, device, args.save_dir, log, tbx, wandb_logger=wandb_logger)
+        try:
+            train(model, dataloaders, args, device, args.save_dir, log, tbx, wandb_logger=wandb_logger)
 
-        # Load best model after training finished
-        best_path = os.path.join(args.save_dir, 'best.pth.tar')
-        model = utils.load_model_checkpoint(best_path, model)
-        model = model.to(device)
+            # Load best model after training finished
+            best_path = os.path.join(args.save_dir, 'best.pth.tar')
+            model = utils.load_model_checkpoint(best_path, model)
+            model = model.to(device)
+        except KeyboardInterrupt:
+            print('-' * 99)
+            print('Exiting from training early')
 
     # Evaluate on dev and test set
     log.info('Training DONE. Evaluating model...')

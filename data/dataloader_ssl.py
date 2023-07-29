@@ -379,10 +379,12 @@ def augment_data(x, meta_node_indices):
     Returns:
         x: (max_seq_len, num_nodes + len(meta_node_indices), input_dim)
     """
+    global_meta_series = x.mean(axis=1, keepdims=True)  # Take the mean of the series
     for index_list in meta_node_indices:
         node_series_list = x[:, index_list, :]  # Extract the series for the current node from x
         meta_series = node_series_list.mean(axis=1, keepdims=True)  # Take the mean of the series
         x = torch.cat([x, meta_series], axis=1)
+    x = torch.cat([x, global_meta_series], axis=1)
     return x
 
 
