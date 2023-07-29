@@ -369,7 +369,7 @@ class DCRNNModel_nextTimePred(nn.Module):
 class NeuroGNN_GraphConstructor(nn.Module):
     def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=6,
                  semantic_embs=None, semantic_embs_dim=128,
-                 dropout_rate=0.5, leaky_rate=0.2,
+                 dropout_rate=0.0, leaky_rate=0.2,
                  device='cpu', gru_dim=256, num_heads=8,
                  dist_adj=None, temporal_embs_dim=256):
         super(NeuroGNN_GraphConstructor, self).__init__()
@@ -382,9 +382,9 @@ class NeuroGNN_GraphConstructor(nn.Module):
         self.nodes_num = nodes_num
         self.meta_nodes_num = meta_nodes_num
         self.seq1 = nn.Sequential(
-            nn.Linear(input_dim, 128),
+            nn.Linear(input_dim, 256),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(256, 512),
             nn.ReLU(),
             nn.Dropout(dropout_rate)
         )
@@ -393,7 +393,7 @@ class NeuroGNN_GraphConstructor(nn.Module):
         self.mhead_attention = nn.MultiheadAttention(self.gru_dim, num_heads, dropout_rate, device=device, batch_first=True)
         
         self.GRU_cells = nn.ModuleList(
-            nn.GRU(128, gru_dim, batch_first=True) for _ in range(self.nodes_num+self.meta_nodes_num)
+            nn.GRU(512, gru_dim, batch_first=True) for _ in range(self.nodes_num+self.meta_nodes_num)
         )
         
         # self.fc_ta = nn.Linear(gru_dim, self.time_step) #TODO remove this
@@ -494,7 +494,7 @@ class NeuroGNN_GraphConstructor(nn.Module):
         
         attention_mask = self.case_amplf_mask(attention)
         
-        attention[~attention_mask] = 0
+        attention[attention_mask==0] = 0
         adj_mat_thresholded = attention.detach().clone()
         
         # X: Node features, attention: fused adjacency matrix
@@ -522,7 +522,7 @@ class NeuroGNN_GraphConstructor(nn.Module):
         return norm_scores
     
     
-    def case_amplf_mask(self, attention, p=2.5, threshold=0.15):
+    def case_amplf_mask(self, attention, p=2.5, threshold=0.02):
         '''
         This function computes the case amplification mask for a 2D attention tensor 
         with the given amplification factor p.
@@ -695,13 +695,13 @@ class NeuroGNN_GNN_GCN(nn.Module):
 
 class NeuroGNN_Encoder(nn.Module):
     def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=6,
-                 semantic_embs=None, semantic_embs_dim=256,
-                 dropout_rate=0.5, leaky_rate=0.2,
-                 device='cpu', gru_dim=256, num_heads=8,
-                 conv_hidden_dim=64, conv_num_layers=3,
-                 output_dim=512,
+                 semantic_embs=None, semantic_embs_dim=128,
+                 dropout_rate=0.2, leaky_rate=0.2,
+                 device='cpu', gru_dim=176, num_heads=16,
+                 conv_hidden_dim=128, conv_num_layers=3,
+                 output_dim=128,
                  dist_adj=None,
-                 temporal_embs_dim=256,
+                 temporal_embs_dim=176,
                  gnn_block_type='gcn'):
         super(NeuroGNN_Encoder, self).__init__()
         self.graph_constructor = NeuroGNN_GraphConstructor(input_dim=input_dim, 
@@ -723,6 +723,7 @@ class NeuroGNN_Encoder(nn.Module):
         self.output_dim = output_dim
         
         if gnn_block_type.lower() == 'gcn':
+            # TODO: update conv_hidden_dim
             self.gnn_block = NeuroGNN_GNN_GCN(node_feature_dim=self.node_features_dim,
                                             device=device,
                                             conv_hidden_dim=conv_hidden_dim,
@@ -733,6 +734,10 @@ class NeuroGNN_Encoder(nn.Module):
                                                     output_dim=conv_hidden_dim,
                                                     stack_cnt=2,
                                                     conv_hidden_dim=conv_hidden_dim)
+        self.layer_norm = nn.LayerNorm(self.conv_hidden_dim)
+        self.fc1 = nn.Sequential(
+            nn.Linear(self.node_features_dim, self.conv_hidden_dim),
+            nn.ReLU())
         self.fc = nn.Sequential(
             nn.Linear(int(self.conv_hidden_dim + self.node_features_dim), int(self.output_dim)),
             nn.ReLU()
@@ -743,8 +748,11 @@ class NeuroGNN_Encoder(nn.Module):
     def forward(self, x):
         X, adj_mat, (adj_mat_thresholded, adj_mat_unthresholded, embed_att, dist_adj, mhead_att_mat) = self.graph_constructor(x)
         X_gnn = self.gnn_block(X, adj_mat)
-        X_hat = torch.cat((X, X_gnn), dim=2)
-        X_hat = self.fc(X_hat)
+        # TODO: best way to make X_hat?
+        # X_hat = torch.cat((X, X_gnn), dim=2)
+        # X_hat = self.fc(X_hat)
+        X = self.fc1(X)
+        X_hat = self.layer_norm(X_gnn + X)
         return X_hat, adj_mat, (adj_mat_thresholded, adj_mat_unthresholded, embed_att, dist_adj, mhead_att_mat)
         
 
@@ -790,7 +798,7 @@ class Attention(nn.Module):
     
 ########## Model for seizure classification/detection ##########
 class NeuroGNN_Classification(nn.Module):
-    def __init__(self, args, num_classes, device=None, dist_adj=None, initial_sem_embeds=None):
+    def __init__(self, args, num_classes, device=None, dist_adj=None, initial_sem_embeds=None, conv_hidden_dim=256):
         super(NeuroGNN_Classification, self).__init__()
 
         num_nodes = args.num_nodes
@@ -811,10 +819,12 @@ class NeuroGNN_Classification(nn.Module):
                                         output_dim=self.rnn_units,
                                         dist_adj=dist_adj,
                                         semantic_embs=initial_sem_embeds,
-                                        gnn_block_type=self.gnn_type
+                                        gnn_block_type=self.gnn_type,
+                                        conv_hidden_dim=conv_hidden_dim
                                         )
 
-        self.fc = nn.Linear(rnn_units, num_classes)
+        # TODO: Update encoder dim input to linear layer
+        self.fc = nn.Linear(conv_hidden_dim, num_classes)
         self.dropout = nn.Dropout(args.dropout)
         self.relu = nn.ReLU()
 
@@ -838,7 +848,7 @@ class NeuroGNN_Classification(nn.Module):
 
 ########## Model for next time prediction ##########
 class NeuroGNN_nextTimePred(nn.Module):
-    def __init__(self, args, device=None, dist_adj=None, initial_sem_embeds=None, meta_nodes_num=6):
+    def __init__(self, args, device=None, dist_adj=None, initial_sem_embeds=None, meta_nodes_num=6, conv_hidden_dim=256):
         super(NeuroGNN_nextTimePred, self).__init__()
 
         num_nodes = args.num_nodes
@@ -848,6 +858,7 @@ class NeuroGNN_nextTimePred(nn.Module):
         dec_input_dim = args.output_dim
         output_dim = args.output_dim
         max_diffusion_step = args.max_diffusion_step
+        dec_input_dim = args.output_dim
 
         self.num_nodes = args.num_nodes
         self.meta_nodes_num = meta_nodes_num
@@ -865,11 +876,13 @@ class NeuroGNN_nextTimePred(nn.Module):
                                         output_dim=self.rnn_units,
                                         dist_adj=dist_adj,
                                         semantic_embs=initial_sem_embeds,
-                                        gnn_block_type=self.gnn_type
+                                        gnn_block_type=self.gnn_type,
+                                        conv_hidden_dim=conv_hidden_dim
                                         )
+        # TODO: update hid_dim
         self.decoder = DCGRUDecoder(input_dim=dec_input_dim,
                                     max_diffusion_step=max_diffusion_step,
-                                    num_nodes=num_nodes+meta_nodes_num, hid_dim=rnn_units,
+                                    num_nodes=num_nodes+meta_nodes_num, hid_dim=conv_hidden_dim,
                                     output_dim=output_dim,
                                     num_rnn_layers=num_rnn_layers,
                                     dcgru_activation=args.dcgru_activation,
@@ -899,6 +912,7 @@ class NeuroGNN_nextTimePred(nn.Module):
         # (num_layers, batch, rnn_units*num_nodes)
         # (batch, num_nodes, node_embedding_dim)
         encoder_hidden_state, adj_mat, _ = self.encoder(encoder_inputs)
+        # should I detach adj_mat or not?
         supports = [adj_mat.repeat(batch_size, 1, 1)]  # (batch, num_nodes, num_nodes)
         
         #(num_layers, batch, node_embedding_dim*num_nodes)

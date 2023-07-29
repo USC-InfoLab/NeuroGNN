@@ -92,12 +92,11 @@ def main(args):
 
     if args.do_train:
         train(model, dataloaders, args, device, args.save_dir, log, tbx,
-              scaler=scaler, wandb_logger=wandb_logger)
+            scaler=scaler, wandb_logger=wandb_logger)
         # Load best model after training finished
         best_path = os.path.join(args.save_dir, 'best.pth.tar')
         model = utils.load_model_checkpoint(best_path, model)
         model = model.to(device)
-
     # Evaluate on test set
     log.info('Training DONE. Evaluating model...')
     test_loss = evaluate(model,
@@ -143,7 +142,7 @@ def train(
     optimizer = optim.Adam(params=model.parameters(),
                            lr=args.lr_init, weight_decay=args.l2_wd)
     scheduler = CosineAnnealingLR(optimizer, T_max=args.num_epochs)
-
+    
     # average meter for validation loss
     nll_meter = utils.AverageMeter()
 
@@ -187,10 +186,20 @@ def train(
                     loss_fn="MAE",
                     standard_scaler=scaler,
                     device=device)
+                
+                # TODO start: Should I use hierarchical consistency loss?
+                # Calculate the hierarchical consistency loss
+                consistency_loss = hierarchical_loss(seq_preds, META_NODE_INDICES)
+                total_loss = loss + consistency_loss
+                # TODO end
                 loss_val = loss.item()
+                
+                
 
-                # Backward
-                loss.backward()
+                # TODO start: Backward
+                # loss.backward()
+                total_loss.backward()
+                # TODO end
                 nn.utils.clip_grad_norm_(
                     model.parameters(), args.max_grad_norm)
                 optimizer.step()
@@ -200,6 +209,7 @@ def train(
                 progress_bar.update(batch_size)
                 progress_bar.set_postfix(epoch=epoch,
                                          loss=loss_val,
+                                         total_loss=total_loss.item(),
                                          lr=optimizer.param_groups[0]['lr'])
 
                 tbx.add_scalar('train/MAE Loss', loss_val, step)
@@ -250,7 +260,6 @@ def train(
 
         # step lr scheduler
         scheduler.step()
-
 
 def evaluate(model, dataloader, args, save_dir, device, is_test=False,
              nll_meter=None, scaler=None):
@@ -306,6 +315,20 @@ def evaluate(model, dataloader, args, save_dir, device, is_test=False,
     eval_loss = nll_meter.avg if (nll_meter is not None) else loss.item()
 
     return eval_loss
+
+
+def hierarchical_loss(y_hat, meta_node_indices):
+    mse_loss = nn.MSELoss()
+
+    total_loss = 0
+    for i, indices in enumerate(meta_node_indices):
+        meta_node_prediction = y_hat[:, :, 19+i, :]  # Get the prediction for the current meta node
+        original_node_predictions = y_hat[:, :, indices, :]  # Get the predictions for the original nodes
+        predicted_meta_value = original_node_predictions.mean(dim=2)  # Calculate the mean of the original node predictions
+
+        total_loss += mse_loss(meta_node_prediction, predicted_meta_value)  # Add the MSE loss to the total loss
+
+    return total_loss
 
 
 if __name__ == '__main__':
