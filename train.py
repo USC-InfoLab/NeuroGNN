@@ -307,8 +307,9 @@ def train(model, dataloaders, args, device, save_dir, log, tbx, wandb_logger=Non
 
                 # Backward
                 loss.backward()
-                nn.utils.clip_grad_norm_(
-                    model.parameters(), args.max_grad_norm)
+                # TODO: clip norm?
+                # nn.utils.clip_grad_norm_(
+                #     model.parameters(), args.max_grad_norm)
                 optimizer.step()
                 step += batch_size
 

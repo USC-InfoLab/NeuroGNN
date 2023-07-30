@@ -382,30 +382,33 @@ class NeuroGNN_GraphConstructor(nn.Module):
         self.nodes_num = nodes_num
         self.meta_nodes_num = meta_nodes_num
         self.seq1 = nn.Sequential(
-            nn.Linear(input_dim, 256),
+            nn.Linear(input_dim, 128),
             nn.ReLU(),
-            nn.Linear(256, 512),
+            nn.Linear(128, 256),
             nn.ReLU(),
             nn.Dropout(dropout_rate)
         )
         self.layer_norm = nn.LayerNorm(self.gru_dim)
         self.time_attention = Attention(self.gru_dim, self.gru_dim)
-        self.mhead_attention = nn.MultiheadAttention(self.gru_dim, num_heads, dropout_rate, device=device, batch_first=True)
-        
+        self.mhead_attention = nn.MultiheadAttention(self.gru_dim*2, num_heads, dropout_rate, device=device, batch_first=True)
         self.GRU_cells = nn.ModuleList(
-            nn.GRU(512, gru_dim, batch_first=True) for _ in range(self.nodes_num+self.meta_nodes_num)
+            nn.GRU(256, gru_dim, batch_first=True, bidirectional=True) for _ in range(self.nodes_num+self.meta_nodes_num)
         )
         
         # self.fc_ta = nn.Linear(gru_dim, self.time_step) #TODO remove this
-        self.fc_ta = nn.Linear(gru_dim, temporal_embs_dim)
+        self.fc_ta = nn.Linear(gru_dim*2, temporal_embs_dim)
         
         for i, cell in enumerate(self.GRU_cells):
             cell.flatten_parameters()
 
-        # TODO: Remove semantic embeddings condition
         self.semantic_embs = torch.from_numpy(semantic_embs).to(device).float()
         
+        # self.linear_semantic_embs = nn.Sequential(
+        #     nn.Linear(semantic_embs.shape[1], semantic_embs_dim),
+        #     nn.ReLU()
+        # )
         self.linear_semantic_embs = nn.Linear(self.semantic_embs.shape[1], semantic_embs_dim) 
+        # self.semantic_embs_layer_norm = nn.LayerNorm(semantic_embs_dim)
                 
        
         # self.node_feature_dim = time_step + semantic_embs_dim
@@ -450,23 +453,29 @@ class NeuroGNN_GraphConstructor(nn.Module):
         batch_size, seq_len, node_cnt, input_dim = x.shape
         # (node_cnt, batch_size, seq_len, input_dim)
         new_x = x.permute(2, 0, 1, 3)
-        weighted_res = torch.empty(batch_size, node_cnt, self.gru_dim).to(x.get_device())
+        weighted_res = torch.empty(batch_size, node_cnt, self.gru_dim*2).to(x.get_device())
         for i, cell in enumerate(self.GRU_cells):
             cell.flatten_parameters()
             x_sup = self.seq1(new_x[i])
             gru_outputs, hid = cell(x_sup)
-            hid = hid.squeeze(0)
+            # TODO: multi-layer GRU?
+            # hid = hid[-1, :, :]
+            # hid = hid.squeeze(0)
             gru_outputs = gru_outputs.permute(1, 0, 2).contiguous()
-            weights = self.time_attention(hid, gru_outputs)
-            updated_weights = weights.unsqueeze(1)
-            gru_outputs = gru_outputs.permute(1, 0, 2)
-            weighted = torch.bmm(updated_weights, gru_outputs)
-            weighted = weighted.squeeze(1)
-            weighted_res[:, i, :] = self.layer_norm(weighted + hid)
+            # TODO: to or not to use self-attention?
+            # weights = self.time_attention(hid, gru_outputs)
+            # updated_weights = weights.unsqueeze(1)
+            # gru_outputs = gru_outputs.permute(1, 0, 2)
+            # weighted = torch.bmm(updated_weights, gru_outputs)
+            # weighted = weighted.squeeze(1)
+            # weighted_res[:, i, :] = self.layer_norm(weighted + hid)
+            h_n = hid.permute(1, 0, 2)
+            weighted_res[:, i, :] = h_n.reshape(batch_size, -1)
         _, attention = self.mhead_attention(weighted_res, weighted_res, weighted_res)
 
         attention = torch.mean(attention, dim=0) #[2000, 2000]
-        attention = self.drop_out(attention)
+        # TODO: Should I put drop_out for attention?
+        # attention = self.drop_out(attention)
 
         return attention, weighted_res
 
@@ -481,7 +490,9 @@ class NeuroGNN_GraphConstructor(nn.Module):
         
         X = weighted_res.permute(0, 1, 2).contiguous()
         if self.semantic_embs is not None:
-            transformed_embeds = self.linear_semantic_embs(self.semantic_embs.to(x.get_device()))
+            init_sem_embs = self.semantic_embs.to(x.get_device())
+            transformed_embeds = self.linear_semantic_embs(init_sem_embs)
+            # transformed_embeds = self.semantic_embs_layer_norm(transformed_embeds + init_sem_embs)
             # transformed_embeds = self.semantic_embs.to(x.get_device())
             transformed_embeds = transformed_embeds.unsqueeze(0).repeat(X.shape[0], 1, 1)
             X = torch.cat((X, transformed_embeds), dim=2)
@@ -495,6 +506,9 @@ class NeuroGNN_GraphConstructor(nn.Module):
         
         attention[attention_mask==0] = 0
         adj_mat_thresholded = attention.detach().clone()
+        
+        # TODO: add softmax for attention?
+        # attention = attention.softmax(dim=1)
         
         # X: Node features, attention: fused adjacency matrix
         return X, attention, (adj_mat_thresholded, adj_mat_unthresholded, embed_att, self.dist_adj, mhead_att_mat) 
@@ -521,7 +535,7 @@ class NeuroGNN_GraphConstructor(nn.Module):
         return norm_scores
     
     
-    def case_amplf_mask(self, attention, p=2.5, threshold=0.02):
+    def case_amplf_mask(self, attention, p=2.5, threshold=0.05):
         '''
         This function computes the case amplification mask for a 2D attention tensor 
         with the given amplification factor p.
@@ -694,13 +708,13 @@ class NeuroGNN_GNN_GCN(nn.Module):
 
 class NeuroGNN_Encoder(nn.Module):
     def __init__(self, input_dim, seq_length, nodes_num=19, meta_nodes_num=6,
-                 semantic_embs=None, semantic_embs_dim=128,
+                 semantic_embs=None, semantic_embs_dim=512,
                  dropout_rate=0.2, leaky_rate=0.2,
-                 device='cpu', gru_dim=176, num_heads=16,
-                 conv_hidden_dim=128, conv_num_layers=3,
+                 device='cpu', gru_dim=512, num_heads=16,
+                 conv_hidden_dim=128, conv_num_layers=4,
                  output_dim=128,
                  dist_adj=None,
-                 temporal_embs_dim=176,
+                 temporal_embs_dim=512,
                  gnn_block_type='gcn'):
         super(NeuroGNN_Encoder, self).__init__()
         self.graph_constructor = NeuroGNN_GraphConstructor(input_dim=input_dim, 
@@ -797,7 +811,7 @@ class Attention(nn.Module):
     
 ########## Model for seizure classification/detection ##########
 class NeuroGNN_Classification(nn.Module):
-    def __init__(self, args, num_classes, device=None, dist_adj=None, initial_sem_embeds=None, conv_hidden_dim=256):
+    def __init__(self, args, num_classes, device=None, dist_adj=None, initial_sem_embeds=None):
         super(NeuroGNN_Classification, self).__init__()
 
         num_nodes = args.num_nodes
@@ -818,12 +832,11 @@ class NeuroGNN_Classification(nn.Module):
                                         output_dim=self.rnn_units,
                                         dist_adj=dist_adj,
                                         semantic_embs=initial_sem_embeds,
-                                        gnn_block_type=self.gnn_type,
-                                        conv_hidden_dim=conv_hidden_dim
+                                        gnn_block_type=self.gnn_type
                                         )
 
         # TODO: Update encoder dim input to linear layer
-        self.fc = nn.Linear(conv_hidden_dim, num_classes)
+        self.fc = nn.Linear(self.encoder.conv_hidden_dim, num_classes)
         self.dropout = nn.Dropout(args.dropout)
         self.relu = nn.ReLU()
 
@@ -840,14 +853,16 @@ class NeuroGNN_Classification(nn.Module):
         logits = self.fc(self.relu(self.dropout(node_embeds)))
         
         # max-pooling over nodes
+        # TODO: Mean pool or max pool
         pool_logits, _ = torch.max(logits, dim=1)  # (batch_size, num_classes)
+        # pool_logits = torch.mean(logits, dim=1)
 
         return pool_logits
         
 
 ########## Model for next time prediction ##########
 class NeuroGNN_nextTimePred(nn.Module):
-    def __init__(self, args, device=None, dist_adj=None, initial_sem_embeds=None, meta_nodes_num=6, conv_hidden_dim=256):
+    def __init__(self, args, device=None, dist_adj=None, initial_sem_embeds=None, meta_nodes_num=6):
         super(NeuroGNN_nextTimePred, self).__init__()
 
         num_nodes = args.num_nodes
@@ -875,13 +890,12 @@ class NeuroGNN_nextTimePred(nn.Module):
                                         output_dim=self.rnn_units,
                                         dist_adj=dist_adj,
                                         semantic_embs=initial_sem_embeds,
-                                        gnn_block_type=self.gnn_type,
-                                        conv_hidden_dim=conv_hidden_dim
+                                        gnn_block_type=self.gnn_type
                                         )
         # TODO: update hid_dim
         self.decoder = DCGRUDecoder(input_dim=dec_input_dim,
                                     max_diffusion_step=max_diffusion_step,
-                                    num_nodes=num_nodes+meta_nodes_num, hid_dim=conv_hidden_dim,
+                                    num_nodes=num_nodes+meta_nodes_num, hid_dim=self.encoder.conv_hidden_dim,
                                     output_dim=output_dim,
                                     num_rnn_layers=num_rnn_layers,
                                     dcgru_activation=args.dcgru_activation,
