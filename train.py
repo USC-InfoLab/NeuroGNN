@@ -329,6 +329,7 @@ def train(model, dataloaders, args, device, save_dir, log, tbx, wandb_logger=Non
             if epoch % args.eval_every == 0:
                 # Evaluate and save checkpoint
                 log.info('Evaluating at epoch {}...'.format(epoch))
+                 
                 eval_results = evaluate(model,
                                         dev_loader,
                                         args,
@@ -336,6 +337,24 @@ def train(model, dataloaders, args, device, save_dir, log, tbx, wandb_logger=Non
                                         device,
                                         is_test=False,
                                         nll_meter=nll_meter)
+                
+                
+                # TODO start: Remove evaluation for test data
+                eval_results_test = evaluate(model,
+                        dataloaders['test'],
+                        args,
+                        save_dir,
+                        device,
+                        is_test=False,
+                        nll_meter=nll_meter,
+                        eval_set='test',
+                        best_thresh=eval_results['best_thresh'])
+                test_results_str = ', '.join('{}: {:.3f}'.format(k, v)
+                                for k, v in eval_results_test.items())
+                log.info('Test {}'.format(test_results_str))
+                # TODO end
+                
+                
                 best_path = saver.save(epoch,
                                        model,
                                        optimizer,

@@ -391,15 +391,21 @@ class NeuroGNN_GraphConstructor(nn.Module):
         self.layer_norm = nn.LayerNorm(self.gru_dim)
         self.time_attention = Attention(self.gru_dim, self.gru_dim)
         self.mhead_attention = nn.MultiheadAttention(self.gru_dim*2, num_heads, dropout_rate, device=device, batch_first=True)
-        self.GRU_cells = nn.ModuleList(
-            nn.GRU(256, gru_dim, batch_first=True, bidirectional=True) for _ in range(self.nodes_num+self.meta_nodes_num)
-        )
+        # self.GRU_cells = nn.ModuleList(
+        #     nn.GRU(256, gru_dim, batch_first=True, bidirectional=True) for _ in range(self.nodes_num+self.meta_nodes_num)
+        # )
+        # self.GRU_cells = nn.ModuleList(
+        #     BiGRUWithMultiHeadAttention(256, gru_dim, 4) for _ in range(self.nodes_num+self.meta_nodes_num)
+        # )
+        self.bigru = nn.GRU(256, gru_dim, batch_first=True, bidirectional=True)
+        self.bigru_layernorm = nn.LayerNorm(gru_dim * 2)
         
         # self.fc_ta = nn.Linear(gru_dim, self.time_step) #TODO remove this
         self.fc_ta = nn.Linear(gru_dim*2, temporal_embs_dim)
         
-        for i, cell in enumerate(self.GRU_cells):
-            cell.flatten_parameters()
+        # for i, cell in enumerate(self.GRU_cells):
+        #     cell.flatten_parameters()
+            
 
         self.semantic_embs = torch.from_numpy(semantic_embs).to(device).float()
         
@@ -448,36 +454,63 @@ class NeuroGNN_GraphConstructor(nn.Module):
         self.to(device) 
 
 
+    # def latent_correlation_layer(self, x):
+    #     # batch_size, _, node_cnt = x.shape
+    #     batch_size, seq_len, node_cnt, input_dim = x.shape
+    #     # (node_cnt, batch_size, seq_len, input_dim)
+    #     new_x = x.permute(2, 0, 1, 3)
+    #     weighted_res = torch.empty(batch_size, node_cnt, self.gru_dim*2).to(x.get_device())
+    #     for i, cell in enumerate(self.GRU_cells):
+    #         # cell.flatten_parameters()
+    #         cell.bigru.flatten_parameters()
+    #         x_sup = self.seq1(new_x[i])
+    #         gru_outputs, hid = cell(x_sup)
+    #         hid = cell(x_sup)
+    #         # TODO: multi-layer GRU?
+    #         # hid = hid[-1, :, :]
+    #         # hid = hid.squeeze(0)
+    #         # gru_outputs = gru_outputs.permute(1, 0, 2).contiguous()
+    #         # TODO: to or not to use self-attention?
+    #         # weights = self.time_attention(hid, gru_outputs)
+    #         # updated_weights = weights.unsqueeze(1)
+    #         # gru_outputs = gru_outputs.permute(1, 0, 2)
+    #         # weighted = torch.bmm(updated_weights, gru_outputs)
+    #         # weighted = weighted.squeeze(1)
+    #         # weighted_res[:, i, :] = self.layer_norm(weighted + hid)
+    #         h_n = hid.permute(1, 0, 2)
+    #         weighted_res[:, i, :] = h_n.reshape(batch_size, -1)
+    #     _, attention = self.mhead_attention(weighted_res, weighted_res, weighted_res)
+
+    #     attention = torch.mean(attention, dim=0) #[2000, 2000]
+    #     # TODO: Should I put drop_out for attention?
+    #     # attention = self.drop_out(attention)
+
+    #     return attention, weighted_res
+    
+    
     def latent_correlation_layer(self, x):
-        # batch_size, _, node_cnt = x.shape
         batch_size, seq_len, node_cnt, input_dim = x.shape
-        # (node_cnt, batch_size, seq_len, input_dim)
-        new_x = x.permute(2, 0, 1, 3)
-        weighted_res = torch.empty(batch_size, node_cnt, self.gru_dim*2).to(x.get_device())
-        for i, cell in enumerate(self.GRU_cells):
-            cell.flatten_parameters()
-            x_sup = self.seq1(new_x[i])
-            gru_outputs, hid = cell(x_sup)
-            # TODO: multi-layer GRU?
-            # hid = hid[-1, :, :]
-            # hid = hid.squeeze(0)
-            gru_outputs = gru_outputs.permute(1, 0, 2).contiguous()
-            # TODO: to or not to use self-attention?
-            # weights = self.time_attention(hid, gru_outputs)
-            # updated_weights = weights.unsqueeze(1)
-            # gru_outputs = gru_outputs.permute(1, 0, 2)
-            # weighted = torch.bmm(updated_weights, gru_outputs)
-            # weighted = weighted.squeeze(1)
-            # weighted_res[:, i, :] = self.layer_norm(weighted + hid)
-            h_n = hid.permute(1, 0, 2)
-            weighted_res[:, i, :] = h_n.reshape(batch_size, -1)
-        _, attention = self.mhead_attention(weighted_res, weighted_res, weighted_res)
+        
+        # Reshape x to combine the batch and node dimensions
+        # New shape: (batch_size * node_cnt, seq_len, input_dim)
+        x_reshaped = x.permute(0, 2, 1, 3).reshape(batch_size * node_cnt, seq_len, input_dim)
+
+        # Pass x_reshaped through the desired layers (e.g., self.seq1 and the bigru)
+        x_sup = self.seq1(x_reshaped)
+        self.bigru.flatten_parameters()
+        gru_outputs, hid = self.bigru(x_sup)
+        h_n = hid.permute(1, 0, 2)
+        h_n_reshaped = h_n.reshape(batch_size, node_cnt, -1)
+        
+        # Apply Layer Normalization
+        h_n_normalized = self.bigru_layernorm(h_n_reshaped)
+
+        _, attention = self.mhead_attention(h_n_normalized, h_n_normalized, h_n_normalized)
 
         attention = torch.mean(attention, dim=0) #[2000, 2000]
-        # TODO: Should I put drop_out for attention?
-        # attention = self.drop_out(attention)
 
-        return attention, weighted_res
+        return attention, h_n_normalized
+
 
 
 
@@ -703,6 +736,48 @@ class NeuroGNN_GNN_GCN(nn.Module):
             X_gnn = self.convs[stack_i](X_gnn, edge_indices, edge_attrs)
             X_gnn = F.relu(X_gnn)
         return X_gnn
+    
+    
+    
+class NeuroGNN_GNN_GraphConv(nn.Module):
+    def __init__(self, node_feature_dim,
+                 device='cpu', conv_hidden_dim=64, conv_num_layers=3):
+        super(NeuroGNN_GNN_GraphConv, self).__init__()
+        self.node_feature_dim = node_feature_dim      
+        self.conv_hidden_dim = conv_hidden_dim
+        self.conv_layers_num = conv_num_layers
+
+        self.convs = nn.ModuleList()
+        self.convs.append(pyg_nn.GraphConv(self.node_feature_dim, self.conv_hidden_dim)) 
+        for l in range(self.conv_layers_num-1):
+            self.convs.append(pyg_nn.GraphConv(self.conv_hidden_dim, self.conv_hidden_dim))
+            
+        # initialize weights using xavier
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif isinstance(m, nn.GRU):
+                for name, param in m.named_parameters():
+                    if 'weight' in name:
+                        nn.init.xavier_normal_(param)
+                    elif 'bias' in name:
+                        param.data.zero_()
+            elif isinstance(m, nn.LayerNorm):
+                m.bias.data.zero_()
+                m.weight.data.fill_(1.0)
+
+        # (Other initialization code unchanged)
+
+    def forward(self, X, adj_mat):
+        edge_indices, edge_attrs = pyg_utils.dense_to_sparse(adj_mat)
+        X_gnn = self.convs[0](X, edge_indices, edge_attrs)
+        X_gnn = F.relu(X_gnn)
+        for stack_i in range(1, self.conv_layers_num):
+            X_gnn = self.convs[stack_i](X_gnn, edge_indices, edge_attrs)
+            X_gnn = F.relu(X_gnn)
+        return X_gnn
 
     
 
@@ -747,6 +822,11 @@ class NeuroGNN_Encoder(nn.Module):
                                                     output_dim=conv_hidden_dim,
                                                     stack_cnt=2,
                                                     conv_hidden_dim=conv_hidden_dim)
+        elif gnn_block_type.lower() == 'graphconv':
+            self.gnn_block = NeuroGNN_GNN_GraphConv(node_feature_dim=self.node_features_dim,
+                                                    device=device,
+                                                    conv_hidden_dim=conv_hidden_dim,
+                                                    conv_num_layers=conv_num_layers)
         self.layer_norm = nn.LayerNorm(self.conv_hidden_dim)
         self.fc1 = nn.Sequential(
             nn.Linear(self.node_features_dim, self.conv_hidden_dim),
@@ -1072,3 +1152,64 @@ def cheb_polynomial(laplacian):
     
     
 ########## StemGNN GNN Block model modules ##########
+
+
+##### Experimental Modules #####
+class MultiHeadSelfAttention(nn.Module):
+    def __init__(self, hidden_size, num_heads):
+        super(MultiHeadSelfAttention, self).__init__()
+        assert hidden_size % num_heads == 0, "hidden_size must be divisible by num_heads"
+        
+        self.num_heads = num_heads
+        self.head_size = hidden_size // num_heads
+
+        # Query, Key, and Value linear transformations
+        self.q_linear = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.k_linear = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.v_linear = nn.Linear(hidden_size, hidden_size, bias=False)
+
+        # Final linear transformation
+        self.out_linear = nn.Linear(hidden_size, hidden_size, bias=False)
+
+    def forward(self, x):
+        batch_size, seq_length, hidden_size = x.size()
+
+        # Transform Query, Key, Value
+        Q = self.q_linear(x).view(batch_size, seq_length, self.num_heads, self.head_size)
+        K = self.k_linear(x).view(batch_size, seq_length, self.num_heads, self.head_size)
+        V = self.v_linear(x).view(batch_size, seq_length, self.num_heads, self.head_size)
+
+        # Transpose for attention computation
+        Q, K, V = Q.transpose(1, 2), K.transpose(1, 2), V.transpose(1, 2)
+
+        # Compute attention scores
+        scores = torch.matmul(Q, K.transpose(-2, -1)) / (self.head_size ** 0.5)
+        attention_weights = torch.softmax(scores, dim=-1)
+
+        # Compute weighted sum
+        output = torch.matmul(attention_weights, V)
+
+        # Concatenate heads and pass through the final linear layer
+        output = output.transpose(1, 2).contiguous().view(batch_size, seq_length, hidden_size)
+        output = self.out_linear(output)
+
+        return output
+
+
+class BiGRUWithMultiHeadAttention(nn.Module):
+    def __init__(self, input_size, hidden_size, num_heads):
+        super(BiGRUWithMultiHeadAttention, self).__init__()
+        self.bigru = nn.GRU(input_size, hidden_size, bidirectional=True, batch_first=True)
+        self.attention = MultiHeadSelfAttention(hidden_size * 2, num_heads) # Multiply by 2 since bidirectional
+
+    def forward(self, x):
+        # Pass through BiGRU
+        output, _ = self.bigru(x)
+        
+        # Apply Multi-Head Self-Attention
+        output = self.attention(output)
+        # Average Pooling to obtain a single vector summarizing the sequence
+        summary_vector = torch.mean(output, dim=1)
+
+        return summary_vector
+
