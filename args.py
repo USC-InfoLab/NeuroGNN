@@ -78,7 +78,7 @@ def get_args():
 
     # Model args
     parser.add_argument("--model_name", type=str, default="neurognn", choices=("dcrnn", "lstm", "densecnn", "cnnlstm", "neurognn"))
-    parser.add_argument("--gnn_type", type=str, default="gcn", choices=("gcn", "stemgnn"))
+    parser.add_argument("--gnn_type", type=str, default="gcn", choices=("gcn", "stemgnn", "graphconv"))
     parser.add_argument('--num_nodes',
                         type=int,
                         default=19,
