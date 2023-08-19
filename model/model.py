@@ -1156,18 +1156,18 @@ class NeuroGNN_Classification(nn.Module):
     
     def hierarchical_pooling(self, node_embeddings, meta_node_indices):
         # Step 1: Pool Within Regions
-        region_pooled_embeddings = [torch.mean(node_embeddings[:, indices, :], dim=1) for indices in meta_node_indices]
+        region_pooled_embeddings = [torch.max(node_embeddings[:, indices, :], dim=1)[0] for indices in meta_node_indices]
         region_pooled_embeddings = torch.stack(region_pooled_embeddings, dim=1) # Shape: (batch_size, num_regions, conv_dimension)
 
         # Step 2: Pool Across Meta Nodes
-        meta_node_pooled_embeddings = torch.mean(node_embeddings[:, -self.metanodes_num:, :], dim=1) # Shape: (batch_size, conv_dimension)
+        meta_node_pooled_embeddings = torch.max(node_embeddings[:, -self.metanodes_num:, :], dim=1)[0] # Shape: (batch_size, conv_dimension)
         meta_node_pooled_embeddings = meta_node_pooled_embeddings.unsqueeze(1) # Add extra dimension, shape: (batch_size, 1, conv_dimension)
         
         # Step 3: Concatenate pooled embeddings
         all_pooled_embeddings = torch.cat([region_pooled_embeddings, meta_node_pooled_embeddings], dim=1) # Shape: (batch_size, num_regions + 1, conv_dimension)
 
         # Step 4: Max Pooling
-        max_pooled_embeddings, _ = torch.max(all_pooled_embeddings, dim=1) # Shape: (batch_size, conv_dimension)
+        max_pooled_embeddings = torch.mean(all_pooled_embeddings, dim=1) # Shape: (batch_size, conv_dimension)
 
         return max_pooled_embeddings
     
