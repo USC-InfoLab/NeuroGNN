@@ -80,7 +80,7 @@ def main(args):
         distances_df = pd.read_csv('./data/electrode_graph/distances_3d.csv')
         dist_adj, _, _ = get_extended_adjacency_matrix(distances_df, INCLUDED_CHANNELS, ELECTRODES_REGIONS)
         initial_sem_embs = utils.get_semantic_embeds()
-        model = NeuroGNN_nextTimePred(args, device, dist_adj, initial_sem_embs)
+        model = NeuroGNN_nextTimePred(args, device, dist_adj, initial_sem_embs, meta_node_indices=META_NODE_INDICES)
     wandb_logger.watch_model(model)
 
     num_params = utils.count_parameters(model)
@@ -185,7 +185,7 @@ def train(
                 loss = utils.compute_regression_loss(
                     y_true=y,
                     y_predicted=seq_preds,
-                    loss_fn="mse",
+                    loss_fn="mae",
                     standard_scaler=scaler,
                     device=device)
                 
@@ -321,7 +321,9 @@ def evaluate(model, dataloader, args, save_dir, device, is_test=False,
 
 
 def hierarchical_loss(y_hat, meta_node_indices):
-    mse_loss = nn.MSELoss()
+    # mse_loss = nn.MSELoss()
+    mae_loss = nn.L1Loss()
+
 
     total_loss = 0
     for i, indices in enumerate(meta_node_indices):
@@ -329,7 +331,8 @@ def hierarchical_loss(y_hat, meta_node_indices):
         original_node_predictions = y_hat[:, :, indices, :]  # Get the predictions for the original nodes
         predicted_meta_value = original_node_predictions.mean(dim=2)  # Calculate the mean of the original node predictions
 
-        total_loss += mse_loss(meta_node_prediction, predicted_meta_value)  # Add the MSE loss to the total loss
+        # total_loss += mse_loss(meta_node_prediction, predicted_meta_value)  # Add the MSE loss to the total loss
+        total_loss += mae_loss(meta_node_prediction, predicted_meta_value)
 
     return total_loss
 
