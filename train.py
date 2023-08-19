@@ -130,7 +130,7 @@ def main(args):
         distances_df = pd.read_csv('./data/electrode_graph/distances_3d.csv')
         dist_adj, _, _ = get_extended_adjacency_matrix(distances_df, INCLUDED_CHANNELS, ELECTRODES_REGIONS)
         initial_sem_embs = utils.get_semantic_embeds()
-        model = NeuroGNN_Classification(args, args.num_classes, device, dist_adj, initial_sem_embs)
+        model = NeuroGNN_Classification(args, args.num_classes, device, dist_adj, initial_sem_embs, meta_node_indices=META_NODE_INDICES)
     elif args.model_name == "densecnn":
         with open("./model/dense_inception/params.json", "r") as f:
             params = json.load(f)
@@ -162,10 +162,17 @@ def main(args):
                     pretrained_model = DCRNNModel_nextTimePred(
                         args=args_pretrained, device=device)  # placeholder
                 elif args.model_name == 'neurognn':
-                    pretrained_model = NeuroGNN_nextTimePred(
-                        args=args_pretrained, device=device,
-                        dist_adj=dist_adj, initial_sem_embeds=initial_sem_embs
-                        )  # placeholder
+                    # pretrained_model = NeuroGNN_nextTimePred(
+                    #     args=args_pretrained, device=device,
+                    #     dist_adj=dist_adj, initial_sem_embeds=initial_sem_embs
+                    #     )  # placeholder
+                    # pretrained_model = NeuroGNN_nextTimePred(
+                    #     args=args_pretrained, device=device,
+                    #     dist_adj=dist_adj, initial_sem_embeds=initial_sem_embs
+                    #     )  # placeholder
+                    pretrained_model = NeuroGNN_Classification(args_pretrained, 1, device, 
+                                                               dist_adj, initial_sem_embs, 
+                                                               meta_node_indices=META_NODE_INDICES)
                 pretrained_model = utils.load_model_checkpoint(
                     args.load_model_path, pretrained_model)
 
