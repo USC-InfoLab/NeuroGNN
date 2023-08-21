@@ -1,0 +1,23 @@
+File: 00008512_s007_t001.edf
+Folder: /storage/datasets_public/eeg_tuh_seizure/TUH_SZ_v1.5.2/edf/dev/01_tcp_ar/085/00008512/s007_2012_07_03
+Type of seizure: Absence (abs) 
+CLINICAL HISTORY:  61 year old gentleman with stroke, left MCA infarct, recurrent status epilepticus, cardiac arrest due January 22, 2012 for 9 minutes, followed by right gaze deviation with left hand shaking.  Evaluate for recurrent seizures.  Persistent obtundation.
+MEDICATIONS:  Dilantin, Lamictal, Dopamine, Dobutamine, Keppra.
+INTRODUCTION:  Digital video EEG was performed at bedside using standard 10-20 system of electrode placement.  The patient is poorly responsive and has a tracheostomy.
+DESCRIPTION OF THE RECORD:  The background EEG is markedly abnormal.  Multiple electrographic seizures are noted with high amplitude epileptiform activity from the left hemisphere, typically maximum in the left frontal central region, but with a generous field of spread.
+The spikes seems to be maximum at C3, but fast activity is seen throughout the left frontal central region with more periodic activity left frontal.  In some locations there seems to be a posterior to anterior lag or even more than one epileptiform focus in the left temporal region, but the ictal driver seems to be in the left frontal central region.
+Seizures are typically on the duration of 1-2 minutes.  Characteristic frequency of evolution of the seizures was observed.
+Despite the marked background slowing, the patient seems to be somewhat responsive.  During the seizures, he has head turning to the right, but not really a forced deviation, more of a more gentle head turning.
+When he is not seizing, he does seem to demonstrate some head control and some spontaneous movement on the left when the seizures stop.
+The background EEG is otherwise markedly slow bilaterally.
+HR:    120 bpm
+IMPRESSION:  Abnormal EEG due to:
+A status epilepticus pattern with multiple, repetitive seizures from the left hemisphere.
+Sharp waves and spikes in the left.
+Intermittent burst suppressed pattern when the patient is not seizing.
+Some generalized periodic complexes observed in the interictal section of the record.
+Some posterior predominant generalized periodic discharges also noted in the interictal period.
+CLINICAL CORRELATION:  This patient has previously been evaluated for status epilepticus out of the left hemisphere.  This EEG may demonstrate some features which are due to anoxic encephalopathy, as well as the ictal pattern.
+
+
+Arash's comment: Frontal + central nodes form a cluster! C3-T3-F3 are pretty close in embedding space! O1 is not close to C3/F3/P3 in embedding space exactly bc description says ..throughout left frontal central! O1 is at back! FP1 is much closer than O1 which makes sense again!
