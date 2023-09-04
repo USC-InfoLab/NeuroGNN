@@ -37,7 +37,7 @@ ALL_LABEL_DICT = {'fnsz': 0, 'gnsz': 1, 'spsz': 2, 'cpsz': 3,
 #     'Occipital Lobe',
 #     'Central Gyrus'
 # ]
-
+   
 CORTEX_REGIONS = [
     'Pre-Frontal Lobe',
     'Frontal Lobe',

@@ -1039,31 +1039,30 @@ class NeuroGNN_DecoderCell(nn.Module):
         """
         Args:
             inputs: shape (batch_size, num_nodes, output_dim)
-            hid: shape (batch_size * num_nodes, dec_hid_dim)
+            hid: shape (1, batch_size * num_nodes, dec_hid_dim)
             enc_output: the last hidden state of the encoder, shape (batch_size, num_nodes, enc_hid_dim)
         Returns:
             outputs: shape (batch_size, num_nodes, output_dim)
         """
-        batch_size, num_nodes, output_dim = input.shape
+        batch_size, num_nodes, output_dim = inputs.shape
         gru_input = self.dropout(inputs.reshape(batch_size * num_nodes, -1)).unsqueeze(1)  # (batch_size * num_nodes, 1, input_dim)
-        enc_output = enc_output.reshape(batch_size * num_nodes, -1)  # (batch_size * num_nodes, enc_hid_dim)
+        enc_output_reshaped = enc_output.reshape(batch_size * num_nodes, -1).unsqueeze(1)  # (batch_size * num_nodes, enc_hid_dim)
 
-        output, hid = self.decoder_gru(torch.cat((gru_input, enc_output), dim=1), hid)
-        pred = self.fc_out(torch.cat((output.squeeze(1), gru_input.squeeze(1), enc_output), dim=1))
+        output, hid = self.decoder_gru(torch.cat((gru_input, enc_output_reshaped), dim=2), hid)
+        pred = self.fc_out(torch.cat((output.squeeze(1), gru_input.squeeze(1), enc_output_reshaped.squeeze(1)), dim=1))
         
         return pred, hid
     
         
 
 class NeuroGNN_Decoder(nn.Module):
-    def __init__(self, input_dim, enc_hid_dim, dec_hid_dim, output_dim, num_nodes,
+    def __init__(self, input_dim, enc_hid_dim, dec_hid_dim, output_dim,
                 device='cpu', dropout=0.0):
         super(NeuroGNN_Decoder, self).__init__()
 
         self.input_dim = input_dim
         self.enc_hid_dim = enc_hid_dim
         self.dec_hid_dim = dec_hid_dim
-        self.num_nodes = num_nodes
         self.output_dim = output_dim
         self.device = device
         
@@ -1081,7 +1080,7 @@ class NeuroGNN_Decoder(nn.Module):
             enc_output: the last hidden state of the encoder, shape (batch, num_nodes, enc_hid_dim)
             teacher_forcing_ratio: ratio for teacher forcing
         Returns:
-            outputs: shape (seq_len, batch_size, num_nodes * output_dim)
+            outputs: shape (batch_size*num_nodes, seq_length, output_dim)
         """
         seq_length, batch_size, num_nodes, _ = inputs.shape
         gru_inputs = inputs.permute(1, 2, 0, 3).contiguous()  # (batch_size, num_nodes, seq_len, input_dim)
@@ -1089,23 +1088,25 @@ class NeuroGNN_Decoder(nn.Module):
 
         # tensor to store decoder outputs
         outputs = torch.zeros(
-            batch_size * num_nodes,
+            batch_size,
+            num_nodes,
             seq_length,
             self.output_dim).to(
             self.device)
             
         init_input = torch.zeros(batch_size, num_nodes, self.input_dim).to(self.device)
-        init_hid = torch.zeros(batch_size * num_nodes, self.dec_hid_dim).to(self.device)
+        init_hid = torch.zeros(batch_size * num_nodes, self.dec_hid_dim).unsqueeze(0).to(self.device)
             
         gru_input = init_input
         hid = init_hid
         
         for t in range(seq_length):
             pred, hid = self.decoder_cell(gru_input, hid, enc_output)
-            outputs[t] = pred
+            pred = pred.reshape(batch_size, num_nodes, -1)
+            outputs[:, :, t, :] = pred
             if teacher_forcing_ratio is not None:
                 teacher_force = random.random() < teacher_forcing_ratio  # a bool value
-                gru_input = (gru_inputs[t] if teacher_force else pred)
+                gru_input = (gru_inputs[:, :, t, :] if teacher_force else pred)
             else:
                 gru_input = pred
 
@@ -1308,15 +1309,22 @@ class NeuroGNN_nextTimePred(nn.Module):
                                         meta_node_indices=meta_node_indices
                                         )
         # TODO: update hid_dim
-        self.decoder = DCGRUDecoder(input_dim=dec_input_dim,
-                                    max_diffusion_step=max_diffusion_step,
-                                    num_nodes=num_nodes+meta_nodes_num, hid_dim=self.encoder.conv_hidden_dim,
-                                    output_dim=output_dim,
-                                    num_rnn_layers=num_rnn_layers,
-                                    dcgru_activation=args.dcgru_activation,
-                                    filter_type=args.filter_type,
-                                    device=device,
-                                    dropout=args.dropout)
+        # self.decoder = DCGRUDecoder(input_dim=dec_input_dim,
+        #                             max_diffusion_step=max_diffusion_step,
+        #                             num_nodes=num_nodes+meta_nodes_num, hid_dim=self.encoder.conv_hidden_dim,
+        #                             output_dim=output_dim,
+        #                             num_rnn_layers=num_rnn_layers,
+        #                             dcgru_activation=args.dcgru_activation,
+        #                             filter_type=args.filter_type,
+        #                             device=device,
+        #                             dropout=args.dropout)
+        self.decoder = NeuroGNN_Decoder(input_dim=dec_input_dim,
+                                        enc_hid_dim=self.encoder.conv_hidden_dim,
+                                        dec_hid_dim=self.encoder.conv_hidden_dim,
+                                        output_dim=output_dim,
+                                        device=device,
+                                        dropout=args.dropout)
+                                                                                
 
     def forward(
             self,
@@ -1341,10 +1349,11 @@ class NeuroGNN_nextTimePred(nn.Module):
         # (batch, num_nodes, node_embedding_dim)
         encoder_hidden_state, adj_mat, _ = self.encoder(encoder_inputs)
         # should I detach adj_mat or not?
-        supports = [adj_mat.repeat(batch_size, 1, 1)]  # (batch, num_nodes, num_nodes)
+        # supports = [adj_mat.repeat(batch_size, 1, 1)]  # (batch, num_nodes, num_nodes)
         
         #(num_layers, batch, node_embedding_dim*num_nodes)
-        encoder_hidden_state = encoder_hidden_state.reshape(self.num_rnn_layers, batch_size, -1)
+        # encoder_hidden_state = encoder_hidden_state.reshape(self.num_rnn_layers, batch_size, -1)
+        
 
         # decoder
         if self.training and self.use_curriculum_learning and (
@@ -1353,15 +1362,24 @@ class NeuroGNN_nextTimePred(nn.Module):
                 self.cl_decay_steps, batches_seen)
         else:
             teacher_forcing_ratio = None
+        # outputs = self.decoder(
+        #     decoder_inputs,
+        #     encoder_hidden_state,
+        #     supports,
+        #     teacher_forcing_ratio=teacher_forcing_ratio)  # (seq_len, batch_size, num_nodes * output_dim)
+        
+        # (batch_size, num_nodes, seq_length, output_dim)
         outputs = self.decoder(
             decoder_inputs,
             encoder_hidden_state,
-            supports,
             teacher_forcing_ratio=teacher_forcing_ratio)  # (seq_len, batch_size, num_nodes * output_dim)
         # (seq_len, batch_size, num_nodes, output_dim)
-        outputs = outputs.reshape((output_seq_len, batch_size, num_nodes, -1))
+        # outputs = outputs.reshape((output_seq_len, batch_size, num_nodes, -1))
         # (batch_size, seq_len, num_nodes, output_dim)
-        outputs = torch.transpose(outputs, dim0=0, dim1=1)
+        # outputs = torch.transpose(outputs, dim0=0, dim1=1)
+        
+        # (batch_size, seq_len, num_nodes, output_dim)
+        outputs = torch.transpose(outputs, dim0=1, dim1=2)
 
         return outputs
 ########## Model for next time prediction ##########

@@ -214,7 +214,8 @@ def build_finetune_model(model_new, model_pretrained, num_rnn_layers,
             model_new.encoder.encoding_cells[l].dconv_candidate = model_pretrained.encoder.encoding_cells[l].dconv_candidate
     elif model_name == 'neurognn':
         # TODO: Which weights to init?
-        model_new.encoder = model_pretrained.encoder
+        # model_new.encoder = model_pretrained.encoder
+        model_new.encoder.graph_constructor = model_pretrained.encoder.graph_constructor
     else:
         raise NotImplementedError
     return model_new
