@@ -1011,8 +1011,105 @@ class NeuroGNN_Encoder(nn.Module):
         X = self.fc1(X)
         X_hat = self.layer_norm(X_gnn + X)
         return X_hat, adj_mat, (adj_mat_thresholded, adj_mat_unthresholded, embed_att, dist_adj, mhead_att_mat)
+    
+    
+    
+class NeuroGNN_DecoderCell(nn.Module):
+    def __init__(self, input_dim, enc_hid_dim, dec_hid_dim, output_dim,
+                device='cpu', dropout=0.0):
+        super(NeuroGNN_DecoderCell, self).__init__()
+
+        self.input_dim = input_dim
+        self.enc_hid_dim = enc_hid_dim
+        self.dec_hid_dim = dec_hid_dim
+        self.output_dim = output_dim
+        self.device = device
+        
+        self.decoder_gru = nn.GRU(input_dim + enc_hid_dim, dec_hid_dim, batch_first=True)
+        
+        self.fc_out = nn.Linear(input_dim + enc_hid_dim + dec_hid_dim, output_dim)
+
+        self.dropout = nn.Dropout(p=dropout)  # dropout before projection layer
+
+    def forward(
+            self,
+            inputs,
+            hid,
+            enc_output):
+        """
+        Args:
+            inputs: shape (batch_size, num_nodes, output_dim)
+            hid: shape (batch_size * num_nodes, dec_hid_dim)
+            enc_output: the last hidden state of the encoder, shape (batch_size, num_nodes, enc_hid_dim)
+        Returns:
+            outputs: shape (batch_size, num_nodes, output_dim)
+        """
+        batch_size, num_nodes, output_dim = input.shape
+        gru_input = self.dropout(inputs.reshape(batch_size * num_nodes, -1)).unsqueeze(1)  # (batch_size * num_nodes, 1, input_dim)
+        enc_output = enc_output.reshape(batch_size * num_nodes, -1)  # (batch_size * num_nodes, enc_hid_dim)
+
+        output, hid = self.decoder_gru(torch.cat((gru_input, enc_output), dim=1), hid)
+        pred = self.fc_out(torch.cat((output.squeeze(1), gru_input.squeeze(1), enc_output), dim=1))
+        
+        return pred, hid
+    
         
 
+class NeuroGNN_Decoder(nn.Module):
+    def __init__(self, input_dim, enc_hid_dim, dec_hid_dim, output_dim, num_nodes,
+                device='cpu', dropout=0.0):
+        super(NeuroGNN_Decoder, self).__init__()
+
+        self.input_dim = input_dim
+        self.enc_hid_dim = enc_hid_dim
+        self.dec_hid_dim = dec_hid_dim
+        self.num_nodes = num_nodes
+        self.output_dim = output_dim
+        self.device = device
+        
+        self.decoder_cell = NeuroGNN_DecoderCell(input_dim, enc_hid_dim, dec_hid_dim, output_dim, device, dropout)
+        
+
+    def forward(
+            self,
+            inputs,
+            enc_output,
+            teacher_forcing_ratio=None):
+        """
+        Args:
+            inputs: shape (seq_len, batch_size, num_nodes, output_dim)
+            enc_output: the last hidden state of the encoder, shape (batch, num_nodes, enc_hid_dim)
+            teacher_forcing_ratio: ratio for teacher forcing
+        Returns:
+            outputs: shape (seq_len, batch_size, num_nodes * output_dim)
+        """
+        seq_length, batch_size, num_nodes, _ = inputs.shape
+        gru_inputs = inputs.permute(1, 2, 0, 3).contiguous()  # (batch_size, num_nodes, seq_len, input_dim)
+
+
+        # tensor to store decoder outputs
+        outputs = torch.zeros(
+            batch_size * num_nodes,
+            seq_length,
+            self.output_dim).to(
+            self.device)
+            
+        init_input = torch.zeros(batch_size, num_nodes, self.input_dim).to(self.device)
+        init_hid = torch.zeros(batch_size * num_nodes, self.dec_hid_dim).to(self.device)
+            
+        gru_input = init_input
+        hid = init_hid
+        
+        for t in range(seq_length):
+            pred, hid = self.decoder_cell(gru_input, hid, enc_output)
+            outputs[t] = pred
+            if teacher_forcing_ratio is not None:
+                teacher_force = random.random() < teacher_forcing_ratio  # a bool value
+                gru_input = (gru_inputs[t] if teacher_force else pred)
+            else:
+                gru_input = pred
+
+        return outputs
 
 
 
