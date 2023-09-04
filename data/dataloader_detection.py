@@ -45,7 +45,7 @@ def computeSliceMatrix(
         slices: list of EEG clips, each having shape (clip_len*freq, num_channels, time_step_size*freq)
         seizure_labels: list of seizure labels for each clip, 1 for seizure, 0 for no seizure
     """
-    with h5py.File(h5_fn, 'r') as f:
+    with h5py.File(h5_fn, 'r', locking=False) as f:
         signal_array = f["resampled_signal"][()]
         resampled_freq = f["resample_freq"][()]
     assert resampled_freq == FREQUENCY
@@ -373,7 +373,7 @@ class SeizureDataset(Dataset):
             0] + '.edf' in file]
         assert len(edf_file) == 1
         edf_file = edf_file[0]
-
+        
         # preprocess
         if self.preproc_dir is None:
             resample_sig_dir = os.path.join(
@@ -383,7 +383,7 @@ class SeizureDataset(Dataset):
                 time_step_size=self.time_step_size, clip_len=self.max_seq_len,
                 is_fft=self.use_fft)
         else:
-            with h5py.File(os.path.join(self.preproc_dir, h5_fn), 'r') as hf:
+            with h5py.File(os.path.join(self.preproc_dir, h5_fn), 'r', locking=False) as hf:
                 eeg_clip = hf['clip'][()]
 
         # data augmentation

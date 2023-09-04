@@ -62,30 +62,18 @@ def main(args):
     augment_metaseries = True if args.model_name == 'neurognn' else False
 
     # Build dataset
+    already_cached = False
+    cached_dataloader_path = f'./cached_data/{args.model_name}_{args.task}_{args.max_seq_len}s_dataloader.pkl'
+    log.info(f'Cached dataloader path: {cached_dataloader_path}')
     log.info('Building dataset...')
     if args.task == 'detection':
-        dataloaders, _, scaler = load_dataset_detection(
-            input_dir=args.input_dir,
-            raw_data_dir=args.raw_data_dir,
-            train_batch_size=args.train_batch_size,
-            test_batch_size=args.test_batch_size,
-            time_step_size=args.time_step_size,
-            max_seq_len=args.max_seq_len,
-            standardize=True,
-            num_workers=args.num_workers,
-            augmentation=args.data_augment,
-            adj_mat_dir='./data/electrode_graph/adj_mx_3d.pkl',
-            graph_type=args.graph_type,
-            top_k=args.top_k,
-            filter_type=args.filter_type,
-            use_fft=args.use_fft,
-            sampling_ratio=1,
-            seed=123,
-            preproc_dir=args.preproc_dir,
-            augment_metaseries=augment_metaseries)
-    elif args.task == 'classification':
-        if args.model_name != 'densecnn':
-            dataloaders, _, scaler = load_dataset_classification(
+        # check if dataloader is already cached
+        if os.path.exists(cached_dataloader_path): 
+            log.info('Cached dataloaders found, loading...')
+            dataloaders = torch.load(cached_dataloader_path)
+            already_cached = True
+        else:
+            dataloaders, _, scaler = load_dataset_detection(
                 input_dir=args.input_dir,
                 raw_data_dir=args.raw_data_dir,
                 train_batch_size=args.train_batch_size,
@@ -94,15 +82,41 @@ def main(args):
                 max_seq_len=args.max_seq_len,
                 standardize=True,
                 num_workers=args.num_workers,
-                padding_val=0.,
                 augmentation=args.data_augment,
                 adj_mat_dir='./data/electrode_graph/adj_mx_3d.pkl',
                 graph_type=args.graph_type,
                 top_k=args.top_k,
                 filter_type=args.filter_type,
                 use_fft=args.use_fft,
+                sampling_ratio=1,
+                seed=123,
                 preproc_dir=args.preproc_dir,
                 augment_metaseries=augment_metaseries)
+    elif args.task == 'classification':
+        if args.model_name != 'densecnn':
+            if os.path.exists(cached_dataloader_path): 
+                log.info('Cached dataloaders found, loading...')
+                dataloaders = torch.load(cached_dataloader_path)
+                already_cached = True
+            else:
+                dataloaders, _, scaler = load_dataset_classification(
+                    input_dir=args.input_dir,
+                    raw_data_dir=args.raw_data_dir,
+                    train_batch_size=args.train_batch_size,
+                    test_batch_size=args.test_batch_size,
+                    time_step_size=args.time_step_size,
+                    max_seq_len=args.max_seq_len,
+                    standardize=True,
+                    num_workers=args.num_workers,
+                    padding_val=0.,
+                    augmentation=args.data_augment,
+                    adj_mat_dir='./data/electrode_graph/adj_mx_3d.pkl',
+                    graph_type=args.graph_type,
+                    top_k=args.top_k,
+                    filter_type=args.filter_type,
+                    use_fft=args.use_fft,
+                    preproc_dir=args.preproc_dir,
+                    augment_metaseries=augment_metaseries)
         else:
             print("Using densecnn dataloader!")
             dataloaders, _, scaler = load_dataset_densecnn_classification(
@@ -166,13 +180,19 @@ def main(args):
                     #     args=args_pretrained, device=device,
                     #     dist_adj=dist_adj, initial_sem_embeds=initial_sem_embs
                     #     )  # placeholder
-                    # pretrained_model = NeuroGNN_nextTimePred(
-                    #     args=args_pretrained, device=device,
-                    #     dist_adj=dist_adj, initial_sem_embeds=initial_sem_embs
-                    #     )  # placeholder
-                    pretrained_model = NeuroGNN_Classification(args_pretrained, 1, device, 
-                                                               dist_adj, initial_sem_embs, 
-                                                               meta_node_indices=META_NODE_INDICES)
+                    if args.task == 'detection':
+                        pretrained_model = NeuroGNN_nextTimePred(
+                            args=args_pretrained, device=device,
+                            dist_adj=dist_adj, initial_sem_embeds=initial_sem_embs,
+                            meta_node_indices=META_NODE_INDICES
+                            )  # placeholder
+                        # pretrained_model = NeuroGNN_Classification(args_pretrained, args_pretrained.num_classes, device, 
+                        #                 dist_adj, initial_sem_embs, 
+                        #                 meta_node_indices=META_NODE_INDICES)
+                    elif args.task == 'classification':
+                        pretrained_model = NeuroGNN_Classification(args_pretrained, 1, device, 
+                                                                dist_adj, initial_sem_embs, 
+                                                                meta_node_indices=META_NODE_INDICES)
                 pretrained_model = utils.load_model_checkpoint(
                     args.load_model_path, pretrained_model)
 
@@ -234,6 +254,10 @@ def main(args):
     log.info('TEST set prediction results: {}'.format(test_results_str))
     for k, v in test_results.items():
         wandb_logger.log('test/{}'.format(k), v, 0)
+        
+    if not already_cached:
+        torch.save(dataloaders, cached_dataloader_path)
+        log.info(f'Dataloaders saved to {cached_dataloader_path}')
 
 
 def train(model, dataloaders, args, device, save_dir, log, tbx, wandb_logger=None):
@@ -366,6 +390,11 @@ def train(model, dataloaders, args, device, save_dir, log, tbx, wandb_logger=Non
                                        model,
                                        optimizer,
                                        eval_results[args.metric_name])
+                
+                
+                # cache dataloaders
+                if args.cache_dataloaders:
+                    pass
 
                 # Accumulate patience for early stopping
                 if eval_results['loss'] < prev_val_loss:

@@ -64,7 +64,7 @@ def main(
             clip_len=clip_len,
             is_fft=is_fft)
 
-        with h5py.File(os.path.join(output_dir, edf_fn + '_' + str(seizure_idx) + '.h5'), 'w') as hf:
+        with h5py.File(os.path.join(output_dir, edf_fn + '_' + str(seizure_idx) + '.h5'), 'w', locking=False) as hf:
             hf.create_dataset('clip', data=eeg_clip)
 
     print("Preprocessing DONE.")

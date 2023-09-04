@@ -44,7 +44,7 @@ def resample_all(raw_edf_dir, save_dir):
                     window_size=int(signal_array.shape[1] / sample_freq),
                 )
 
-            with h5py.File(save_fn, "w") as hf:
+            with h5py.File(save_fn, "w", locking=False) as hf:
                 hf.create_dataset("resampled_signal", data=signal_array)
                 hf.create_dataset("resample_freq", data=FREQUENCY)
 

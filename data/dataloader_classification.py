@@ -43,7 +43,7 @@ def computeSliceMatrix(
     """
     offset = 2 # hard-coded offset
 
-    with h5py.File(h5_fn, 'r') as f:
+    with h5py.File(h5_fn, 'r', locking=False) as f:
         signal_array = f["resampled_signal"][()] # (num_channels, num_data_points)
         resampled_freq = f["resample_freq"][()]
     assert resampled_freq == FREQUENCY
@@ -319,7 +319,7 @@ class SeizureDataset(Dataset):
                 time_step_size=self.time_step_size, clip_len=self.max_seq_len,
                 is_fft=self.use_fft)
         else:
-            with h5py.File(os.path.join(self.preproc_dir, edf_fn + '_' + str(seizure_idx) + '.h5'), 'r') as hf:
+            with h5py.File(os.path.join(self.preproc_dir, edf_fn + '_' + str(seizure_idx) + '.h5'), 'r', locking=False) as hf:
                 eeg_clip = hf['clip'][()]
 
         # data augmentation

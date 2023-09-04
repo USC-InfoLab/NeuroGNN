@@ -196,6 +196,10 @@ def get_args():
                         default=False,
                         action='store_true',
                         help='Whether use wandb to log results.')
+    parser.add_argument('--cache_dataloaders',
+                    default=False,
+                    action='store_true',
+                    help='Whether or not to cache dataloaders.')
 
     parser.add_argument(
         '--patience',
