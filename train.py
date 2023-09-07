@@ -190,9 +190,14 @@ def main(args):
                         #                 dist_adj, initial_sem_embs, 
                         #                 meta_node_indices=META_NODE_INDICES)
                     elif args.task == 'classification':
-                        pretrained_model = NeuroGNN_Classification(args_pretrained, 1, device, 
-                                                                dist_adj, initial_sem_embs, 
-                                                                meta_node_indices=META_NODE_INDICES)
+                        # pretrained_model = NeuroGNN_Classification(args_pretrained, 1, device, 
+                        #                                         dist_adj, initial_sem_embs, 
+                        #                                         meta_node_indices=META_NODE_INDICES)
+                        pretrained_model = NeuroGNN_nextTimePred(
+                            args=args_pretrained, device=device,
+                            dist_adj=dist_adj, initial_sem_embeds=initial_sem_embs,
+                            meta_node_indices=META_NODE_INDICES
+                            )
                 pretrained_model = utils.load_model_checkpoint(
                     args.load_model_path, pretrained_model)
 
@@ -321,7 +326,7 @@ def train(model, dataloaders, args, device, save_dir, log, tbx, wandb_logger=Non
                 # Forward
                 # (batch_size, num_classes)
                 if args.model_name == "dcrnn":
-                    logits = model(x, seq_lengths, supports)
+                    logits, _ = model(x, seq_lengths, supports)
                 elif args.model_name == "densecnn":
                     x = x.transpose(-1, -2).reshape(batch_size, -1, args.num_nodes) # (batch_size, seq_len, num_nodes)
                     logits = model(x)
@@ -462,7 +467,7 @@ def evaluate(
             # Forward
             # (batch_size, num_classes)
             if args.model_name == "dcrnn":
-                logits = model(x, seq_lengths, supports)
+                logits, _ = model(x, seq_lengths, supports)
             elif args.model_name == "densecnn":
                 x = x.transpose(-1, -2).reshape(batch_size, -1, args.num_nodes) # (batch_size, len*freq, num_nodes)
                 logits = model(x)
