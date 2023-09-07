@@ -263,6 +263,7 @@ class DCRNNModel_classification(nn.Module):
             output, seq_lengths, batch_first=True)  # (batch_size, rnn_units*num_nodes)
         # (batch_size, num_nodes, rnn_units)
         last_out = last_out.view(batch_size, self.num_nodes, self.rnn_units)
+        node_embeds_detached = last_out.detach().clone().cpu().numpy()
         last_out = last_out.to(self._device)
 
         # final FC layer
@@ -271,7 +272,7 @@ class DCRNNModel_classification(nn.Module):
         # max-pooling over nodes
         pool_logits, _ = torch.max(logits, dim=1)  # (batch_size, num_classes)
 
-        return pool_logits
+        return pool_logits, node_embeds_detached
 ########## Model for seizure classification/detection ##########
 
 
