@@ -188,6 +188,14 @@ def get_args():
                         type=str,
                         default='weighted',
                         help='weighted, micro or macro.')
+    parser.add_argument('--train_sampling_ratio',
+                    type=float,
+                    default=0.8,
+                    help='Train-set sampling ratio.')
+    parser.add_argument('--sampled_train',
+                    default=False,
+                    action='store_true',
+                    help='Whether or not to use sampled train set.')
     parser.add_argument('--data_augment',
                         default=False,
                         action='store_true',

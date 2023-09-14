@@ -11,8 +11,8 @@ import torch.optim as optim
 import math
 import utils
 from data.data_utils import *
-from data.dataloader_detection import load_dataset_detection
-from data.dataloader_classification import load_dataset_classification
+from data.dataloader_detection import load_dataset_detection, load_dataset_detection_sampled
+from data.dataloader_classification import load_dataset_classification, load_dataset_classification_sampled
 from data.dataloader_densecnn_classification import load_dataset_densecnn_classification
 from constants import *
 from args import get_args
@@ -53,6 +53,8 @@ def main(args):
     run_name = f'{args.model_name}-window:{args.max_seq_len}-horizon:{args.output_seq_len}-{str(datetime.now().strftime("%Y-%m-%d %H:%M"))}'
     if args.fine_tune:
         run_name = f'finetuned-{run_name}'
+    if args.sampled_train:
+        run_name = f'sampled-{args.train_sampling_ratio}-{run_name}'
     log = utils.get_logger(args.save_dir, 'train')
     tbx = SummaryWriter(args.save_dir)
     wandb_logger = WandbLogger(f"EEG_{args.task}", args.use_wandb, run_name)
@@ -68,11 +70,12 @@ def main(args):
     log.info('Building dataset...')
     if args.task == 'detection':
         # check if dataloader is already cached
-        if os.path.exists(cached_dataloader_path): 
-            log.info('Cached dataloaders found, loading...')
-            dataloaders = torch.load(cached_dataloader_path)
-            already_cached = True
-        else:
+        # if os.path.exists(cached_dataloader_path): 
+        #     log.info('Cached dataloaders found, loading...')
+        #     dataloaders = torch.load(cached_dataloader_path)
+        #     already_cached = True
+        # else:
+        if not args.sampled_train:
             dataloaders, _, scaler = load_dataset_detection(
                 input_dir=args.input_dir,
                 raw_data_dir=args.raw_data_dir,
@@ -92,13 +95,35 @@ def main(args):
                 seed=123,
                 preproc_dir=args.preproc_dir,
                 augment_metaseries=augment_metaseries)
+        else:
+            dataloaders, _, scaler = load_dataset_detection_sampled(
+                input_dir=args.input_dir,
+                raw_data_dir=args.raw_data_dir,
+                train_batch_size=args.train_batch_size,
+                test_batch_size=args.test_batch_size,
+                time_step_size=args.time_step_size,
+                max_seq_len=args.max_seq_len,
+                standardize=True,
+                num_workers=args.num_workers,
+                augmentation=args.data_augment,
+                adj_mat_dir='./data/electrode_graph/adj_mx_3d.pkl',
+                graph_type=args.graph_type,
+                top_k=args.top_k,
+                filter_type=args.filter_type,
+                use_fft=args.use_fft,
+                sampling_ratio=args.train_sampling_ratio,
+                seed=123,
+                preproc_dir=args.preproc_dir,
+                augment_metaseries=augment_metaseries,
+                train_sampling_ratio=args.train_sampling_ratio)
     elif args.task == 'classification':
         if args.model_name != 'densecnn':
-            if os.path.exists(cached_dataloader_path): 
-                log.info('Cached dataloaders found, loading...')
-                dataloaders = torch.load(cached_dataloader_path)
-                already_cached = True
-            else:
+            # if os.path.exists(cached_dataloader_path): 
+            #     log.info('Cached dataloaders found, loading...')
+            #     dataloaders = torch.load(cached_dataloader_path)
+            #     already_cached = True
+            # else:
+            if not args.sampled_train:
                 dataloaders, _, scaler = load_dataset_classification(
                     input_dir=args.input_dir,
                     raw_data_dir=args.raw_data_dir,
@@ -117,6 +142,26 @@ def main(args):
                     use_fft=args.use_fft,
                     preproc_dir=args.preproc_dir,
                     augment_metaseries=augment_metaseries)
+            else:
+                dataloaders, _, scaler = load_dataset_classification_sampled(
+                    input_dir=args.input_dir,
+                    raw_data_dir=args.raw_data_dir,
+                    train_batch_size=args.train_batch_size,
+                    test_batch_size=args.test_batch_size,
+                    time_step_size=args.time_step_size,
+                    max_seq_len=args.max_seq_len,
+                    standardize=True,
+                    num_workers=args.num_workers,
+                    padding_val=0.,
+                    augmentation=args.data_augment,
+                    adj_mat_dir='./data/electrode_graph/adj_mx_3d.pkl',
+                    graph_type=args.graph_type,
+                    top_k=args.top_k,
+                    filter_type=args.filter_type,
+                    use_fft=args.use_fft,
+                    preproc_dir=args.preproc_dir,
+                    augment_metaseries=augment_metaseries,
+                    train_sampling_ratio=args.train_sampling_ratio)
         else:
             print("Using densecnn dataloader!")
             dataloaders, _, scaler = load_dataset_densecnn_classification(

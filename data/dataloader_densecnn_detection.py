@@ -350,3 +350,98 @@ def load_dataset_detection(
         datasets[split] = dataset
 
     return dataloaders, datasets, scaler
+
+
+
+def load_dataset_detection_sampled(
+        input_dir,
+        raw_data_dir,
+        train_batch_size,
+        test_batch_size=None,
+        max_seq_len=60,
+        standardize=True,
+        num_workers=8,
+        augmentation=False,
+        use_fft=False,
+        sampling_ratio=1,
+        seed=123,
+        preproc_dir=None):
+    """
+    Args:
+        input_dir: dir to preprocessed h5 file
+        raw_data_dir: dir to TUSZ raw edf files
+        train_batch_size: int
+        test_batch_size: int
+        max_seq_len: EEG clip length, in seconds
+        standardize: if True, will z-normalize wrt train set
+        num_workers: int
+        augmentation: if True, perform random augmentation on EEG
+        use_fft: whether perform Fourier transform
+        sampling_ratio: ratio of positive to negative examples for undersampling
+        seed: random seed for undersampling
+        preproc_dir: dir to preprocessed Fourier transformed data, optional
+    Returns:
+        dataloaders: dictionary of train/dev/test dataloaders
+        datasets: dictionary of train/dev/test datasets
+        scaler: standard scaler
+    """
+    if (graph_type is not None) and (
+            graph_type not in ['individual', 'combined']):
+        raise NotImplementedError
+
+    # load mean and std
+    if standardize:
+        means_dir = os.path.join(
+            FILEMARKER_DIR,
+            'means_seq2seq_fft_' +
+            str(max_seq_len) +
+            's_szdetect_single.pkl')
+        stds_dir = os.path.join(
+            FILEMARKER_DIR,
+            'stds_seq2seq_fft_' +
+            str(max_seq_len) +
+            's_szdetect_single.pkl')
+        with open(means_dir, 'rb') as f:
+            means = pickle.load(f)
+        with open(stds_dir, 'rb') as f:
+            stds = pickle.load(f)
+
+        scaler = StandardScaler(mean=means, std=stds)
+    else:
+        scaler = None
+
+    dataloaders = {}
+    datasets = {}
+    for split in ['train', 'dev', 'test']:
+        if split == 'train':
+            data_augment = augmentation
+        else:
+            data_augment = False  # never do augmentation on dev/test sets
+
+        dataset = SeizureDataset(input_dir=input_dir,
+                                 raw_data_dir=raw_data_dir,
+                                 max_seq_len=max_seq_len,
+                                 standardize=standardize,
+                                 scaler=scaler,
+                                 split=split,
+                                 data_augment=data_augment,
+                                 sampling_ratio=sampling_ratio,
+                                 seed=seed,
+                                 use_fft=use_fft,
+                                 preproc_dir=preproc_dir)
+
+        if split == 'train':
+            shuffle = True
+            batch_size = train_batch_size
+        else:
+            shuffle = False
+            batch_size = test_batch_size
+
+        loader = DataLoader(dataset=dataset,
+                            shuffle=shuffle,
+                            batch_size=batch_size,
+                            num_workers=num_workers)
+        dataloaders[split] = loader
+        datasets[split] = dataset
+
+    return dataloaders, datasets, scaler
