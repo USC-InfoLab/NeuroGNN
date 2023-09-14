@@ -10,7 +10,7 @@ import utils
 from data.data_utils import *
 from constants import INCLUDED_CHANNELS, FREQUENCY, META_NODE_INDICES
 from utils import StandardScaler
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
 import torch
 import math
 import h5py
@@ -19,6 +19,10 @@ import pickle
 import scipy
 import scipy.signal
 from pathlib import Path
+from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
+from sklearn.model_selection import StratifiedShuffleSplit
+
+
 
 repo_paths = str(Path.cwd()).split('NeuroGNN')
 repo_paths = Path(repo_paths[0]).joinpath('NeuroGNN')
@@ -545,6 +549,133 @@ def load_dataset_detection(
                             shuffle=shuffle,
                             batch_size=batch_size,
                             num_workers=num_workers)
+        dataloaders[split] = loader
+        datasets[split] = dataset
+
+    return dataloaders, datasets, scaler
+
+
+def load_dataset_detection_sampled(
+        input_dir,
+        raw_data_dir,
+        train_batch_size,
+        test_batch_size=None,
+        time_step_size=1,
+        max_seq_len=60,
+        standardize=True,
+        num_workers=8,
+        augmentation=False,
+        adj_mat_dir=None,
+        graph_type=None,
+        top_k=None,
+        filter_type='laplacian',
+        use_fft=False,
+        sampling_ratio=1,
+        seed=123,
+        preproc_dir=None,
+        augment_metaseries=False,
+        train_sampling_ratio=1):
+    """
+    Args:
+        input_dir: dir to preprocessed h5 file
+        raw_data_dir: dir to TUSZ raw edf files
+        train_batch_size: int
+        test_batch_size: int
+        time_step_size: int, in seconds
+        max_seq_len: EEG clip length, in seconds
+        standardize: if True, will z-normalize wrt train set
+        num_workers: int
+        augmentation: if True, perform random augmentation on EEG
+        adj_mat_dir: dir to pre-computed distance graph adjacency matrix
+        graph_type: 'combined' (i.e. distance graph) or 'individual' (correlation graph)
+        top_k: int, top-k neighbors of each node to keep. For correlation graph only
+        filter_type: 'laplacian' for distance graph, 'dual_random_walk' for correlation graph
+        use_fft: whether perform Fourier transform
+        sampling_ratio: ratio of positive to negative examples for undersampling
+        seed: random seed for undersampling
+        preproc_dir: dir to preprocessed Fourier transformed data, optional
+        train_sampling_ratio: ratio of training data to sample, float, between 0 and 1
+    Returns:
+        dataloaders: dictionary of train/dev/test dataloaders
+        datasets: dictionary of train/dev/test datasets
+        scaler: standard scaler
+    """
+    if (graph_type is not None) and (
+            graph_type not in ['individual', 'combined']):
+        raise NotImplementedError
+
+    # load mean and std
+    if standardize:
+        means_dir = os.path.join(
+            FILEMARKER_DIR,
+            'means_seq2seq_fft_' +
+            str(max_seq_len) +
+            's_szdetect_single.pkl')
+        stds_dir = os.path.join(
+            FILEMARKER_DIR,
+            'stds_seq2seq_fft_' +
+            str(max_seq_len) +
+            's_szdetect_single.pkl')
+        with open(means_dir, 'rb') as f:
+            means = pickle.load(f)
+        with open(stds_dir, 'rb') as f:
+            stds = pickle.load(f)
+
+        scaler = StandardScaler(mean=means, std=stds)
+    else:
+        scaler = None
+
+    dataloaders = {}
+    datasets = {}
+    for split in ['train', 'dev', 'test']:
+        if split == 'train':
+            data_augment = augmentation
+        else:
+            data_augment = False  # never do augmentation on dev/test sets
+
+        dataset = SeizureDataset(input_dir=input_dir,
+                                 raw_data_dir=raw_data_dir,
+                                 time_step_size=time_step_size,
+                                 max_seq_len=max_seq_len,
+                                 standardize=standardize,
+                                 scaler=scaler,
+                                 split=split,
+                                 data_augment=data_augment,
+                                 adj_mat_dir=adj_mat_dir,
+                                 graph_type=graph_type,
+                                 top_k=top_k,
+                                 filter_type=filter_type,
+                                 sampling_ratio=sampling_ratio,
+                                 seed=seed,
+                                 use_fft=use_fft,
+                                 preproc_dir=preproc_dir,
+                                 augment_metaseries=augment_metaseries)
+
+        if split == 'train':
+            shuffle = True
+            batch_size = train_batch_size
+            # Extract all labels from training set
+            all_train_labels = [data[1] for data in dataset]
+            
+            # Use StratifiedShuffleSplit to get stratified indices
+            sss = StratifiedShuffleSplit(n_splits=1, test_size=1-train_sampling_ratio, random_state=42)
+            for train_index, _ in sss.split(np.zeros(len(all_train_labels)), all_train_labels):
+                stratified_indices = train_index
+
+            stratified_sampler = SubsetRandomSampler(stratified_indices)
+            
+            loader = DataLoader(dataset=dataset,
+                                batch_size=batch_size,
+                                sampler=stratified_sampler,
+                                num_workers=num_workers)
+        else:
+            shuffle = False
+            batch_size = test_batch_size
+            loader = DataLoader(dataset=dataset,
+                                shuffle=shuffle,
+                                batch_size=batch_size,
+                                num_workers=num_workers)
+            
         dataloaders[split] = loader
         datasets[split] = dataset
 
