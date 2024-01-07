@@ -17,6 +17,27 @@ python train_ssl.py --input_dir /storage/datasets_public/eeg_tuh_seizure/Resampl
 
 --- Classification and Detection without fine-tuning with saved preproc (remove --preproc_dir if not saved) ---
 
+---- UPDATED COMMAND ----
+Classification (60s clips)
+```
+python train.py --input_dir /storage/datasets_public/eeg_tuh_seizure/Resampled_TUH_SZ_v1.5.2 --raw_data_dir /storage/datasets_public/eeg_tuh_seizure/TUH_SZ_v1.5.2 --save_dir /home/users/arash/W4H/eeg/saved_results/seizure_classification_clip_60 --graph_type combined --max_seq_len 60 --do_train --num_epochs 60 --task classification --metric_name F1 --use_fft --lr_init 2e-4 --num_rnn_layers 2 --max_diffusion_step 2 --num_classes 4 --data_augment --device cuda --preproc_dir /storage/datasets_public/eeg_tuh_seizure/Preprocessed_TUH_SZ_v1.5.2/seizure_classification_clip_60/clipLen60_timeStepSize1 --model_name neurognn --dropout 0.5
+```
+(Need to replace save_dir with the user's desired save directory)
+
+
+Detection (60s clips)
+```
+python train.py --input_dir /storage/datasets_public/eeg_tuh_seizure/Resampled_TUH_SZ_v1.5.2 --raw_data_dir /storage/datasets_public/eeg_tuh_seizure/TUH_SZ_v1.5.2 --save_dir /home/users/arash/W4H/eeg/saved_results/seizure_detection_clip_60 --graph_type combined --max_seq_len 60 --do_train --num_epochs 100 --task detection --metric_name auroc --use_fft --lr_init 1e-4 --num_rnn_layers 2 --max_diffusion_step 2 --num_classes 1 --data_augment --device cuda --preproc_dir /storage/datasets_public/eeg_tuh_seizure/Preprocessed_TUH_SZ_v1.5.2/seizure_detection_clip_60/clipLen60_timeStepSize1 --model_name neurognn --use_wandb
+```
+
+To fine-tune the retrained model, add the following arguments to the run commands:
+``` 
+--fine_tune --load_model_path /home/users/arash/W4H/eeg/NeuroGNN/pretrained/pretrained_distance_graph_60s.pth.tar  --pretrained_num_rnn_layers 3
+```
+(Need to replace load_model_path with the user's pretrained checkpoint) 
+
+
+--- Legacy Command ---
 --------- 60s clip detection ---------
 python train.py --input_dir /storage/datasets_public/eeg_tuh_seizure/Resampled_TUH_SZ_v1.5.2 --raw_data_dir /storage/datasets_public/eeg_tuh_seizure/TUH_SZ_v1.5.2 --save_dir /home/users/arash/W4H/eeg/saved_results/seizure_detection_clip_60 --graph_type combined --max_seq_len 60 --do_train --num_epochs 100 --task detection --metric_name auroc --use_fft --lr_init 1e-4 --num_rnn_layers 2 --max_diffusion_step 2 --num_classes 1 --data_augment --device cuda --preproc_dir /storage/datasets_public/eeg_tuh_seizure/Preprocessed_TUH_SZ_v1.5.2/seizure_detection_clip_60/clipLen60_timeStepSize1 --model_name neurognn --use_wandb
 
