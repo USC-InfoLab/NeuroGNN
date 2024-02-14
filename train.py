@@ -388,9 +388,6 @@ def train(model, dataloaders, args, device, save_dir, log, tbx, wandb_logger=Non
 
                 # Backward
                 loss.backward()
-                # TODO: clip norm?
-                # nn.utils.clip_grad_norm_(
-                #     model.parameters(), args.max_grad_norm)
                 optimizer.step()
                 step += batch_size
 
@@ -418,22 +415,7 @@ def train(model, dataloaders, args, device, save_dir, log, tbx, wandb_logger=Non
                                         device,
                                         is_test=False,
                                         nll_meter=nll_meter)
-                
-                
-                # TODO start: Remove evaluation for test data
-                eval_results_test = evaluate(model,
-                        dataloaders['test'],
-                        args,
-                        save_dir,
-                        device,
-                        is_test=False,
-                        nll_meter=nll_meter,
-                        eval_set='test',
-                        best_thresh=eval_results['best_thresh'])
-                test_results_str = ', '.join('{}: {:.3f}'.format(k, v)
-                                for k, v in eval_results_test.items())
-                log.info('Test {}'.format(test_results_str))
-                # TODO end
+
                 
                 
                 best_path = saver.save(epoch,

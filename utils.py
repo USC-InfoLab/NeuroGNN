@@ -1,6 +1,6 @@
 """
 Some code are adapted from https://github.com/liyaguang/DCRNN
-and https://github.com/xlwang233/pytorch-DCRNN, which are
+and https://github.com/xlwang233/pytorch-DCRNN, https://github.com/tsy935/eeg-gnn-ssl which are
 licensed under the MIT License.
 """
 
@@ -213,9 +213,7 @@ def build_finetune_model(model_new, model_pretrained, num_rnn_layers,
             model_new.encoder.encoding_cells[l].dconv_gate = model_pretrained.encoder.encoding_cells[l].dconv_gate
             model_new.encoder.encoding_cells[l].dconv_candidate = model_pretrained.encoder.encoding_cells[l].dconv_candidate
     elif model_name == 'neurognn':
-        # TODO: Which weights to init?
         model_new.encoder = model_pretrained.encoder
-        # model_new.encoder.graph_constructor = model_pretrained.encoder.graph_constructor
     else:
         raise NotImplementedError
     return model_new
