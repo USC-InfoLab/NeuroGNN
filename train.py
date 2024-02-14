@@ -69,12 +69,6 @@ def main(args):
     log.info(f'Cached dataloader path: {cached_dataloader_path}')
     log.info('Building dataset...')
     if args.task == 'detection':
-        # check if dataloader is already cached
-        # if os.path.exists(cached_dataloader_path): 
-        #     log.info('Cached dataloaders found, loading...')
-        #     dataloaders = torch.load(cached_dataloader_path)
-        #     already_cached = True
-        # else:
         if not args.sampled_train:
             dataloaders, _, scaler = load_dataset_detection(
                 input_dir=args.input_dir,
@@ -118,11 +112,6 @@ def main(args):
                 train_sampling_ratio=args.train_sampling_ratio)
     elif args.task == 'classification':
         if args.model_name != 'densecnn':
-            # if os.path.exists(cached_dataloader_path): 
-            #     log.info('Cached dataloaders found, loading...')
-            #     dataloaders = torch.load(cached_dataloader_path)
-            #     already_cached = True
-            # else:
             if not args.sampled_train:
                 dataloaders, _, scaler = load_dataset_classification(
                     input_dir=args.input_dir,
@@ -221,23 +210,13 @@ def main(args):
                     pretrained_model = DCRNNModel_nextTimePred(
                         args=args_pretrained, device=device)  # placeholder
                 elif args.model_name == 'neurognn':
-                    # pretrained_model = NeuroGNN_nextTimePred(
-                    #     args=args_pretrained, device=device,
-                    #     dist_adj=dist_adj, initial_sem_embeds=initial_sem_embs
-                    #     )  # placeholder
                     if args.task == 'detection':
                         pretrained_model = NeuroGNN_nextTimePred(
                             args=args_pretrained, device=device,
                             dist_adj=dist_adj, initial_sem_embeds=initial_sem_embs,
                             meta_node_indices=META_NODE_INDICES
-                            )  # placeholder
-                        # pretrained_model = NeuroGNN_Classification(args_pretrained, args_pretrained.num_classes, device, 
-                        #                 dist_adj, initial_sem_embs, 
-                        #                 meta_node_indices=META_NODE_INDICES)
+                            )
                     elif args.task == 'classification':
-                        # pretrained_model = NeuroGNN_Classification(args_pretrained, 1, device, 
-                        #                                         dist_adj, initial_sem_embs, 
-                        #                                         meta_node_indices=META_NODE_INDICES)
                         pretrained_model = NeuroGNN_nextTimePred(
                             args=args_pretrained, device=device,
                             dist_adj=dist_adj, initial_sem_embeds=initial_sem_embs,

@@ -314,7 +314,6 @@ def evaluate(model, dataloader, args, save_dir, device, is_test=False,
 
 
 def hierarchical_loss(y_hat, meta_node_indices):
-    # mse_loss = nn.MSELoss()
     mae_loss = nn.L1Loss()
 
 
@@ -324,7 +323,6 @@ def hierarchical_loss(y_hat, meta_node_indices):
         original_node_predictions = y_hat[:, :, indices, :]  # Get the predictions for the original nodes
         predicted_meta_value = original_node_predictions.mean(dim=2)  # Calculate the mean of the original node predictions
 
-        # total_loss += mse_loss(meta_node_prediction, predicted_meta_value)  # Add the MSE loss to the total loss
         total_loss += mae_loss(meta_node_prediction, predicted_meta_value)
 
     return total_loss
