@@ -181,7 +181,6 @@ def train(
                 elif args.model_name == "neurognn":
                     seq_preds = model(x, y, batches_seen=step)
                     
-                # TODO: Should I use MAE or MSE loss?
                 loss = utils.compute_regression_loss(
                     y_true=y,
                     y_predicted=seq_preds,
@@ -189,22 +188,16 @@ def train(
                     standard_scaler=scaler,
                     device=device)
                 
-                # TODO start: Should I use hierarchical consistency loss?
                 # Calculate the hierarchical consistency loss
                 consistency_loss = hierarchical_loss(seq_preds, META_NODE_INDICES)
                 total_loss = 0.9 * loss + 0.1 * consistency_loss
-                # TODO end
+
                 loss_val = loss.item()
                 
                 
 
-                # TODO start: Backward
-                # loss.backward()
+
                 total_loss.backward()
-                # TODO end
-                # TODO: clip norm?
-                # nn.utils.clip_grad_norm_(
-                #     model.parameters(), args.max_grad_norm)
                 optimizer.step()
                 step += batch_size
 
