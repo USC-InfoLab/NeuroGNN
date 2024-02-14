@@ -2,17 +2,25 @@
 
 This repository hosts the implementation of NeuroGNN, a dynamic Graph Neural Network (GNN) framework introduced in our paper "Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data", accepted at PAKDD '24. Our framework is designed to enhance seizure detection and classification through the capture of EEG data's spatial, temporal, semantic, and taxonomic correlations.
 
-## Citation
+## NeuroGNN Overview
 
-If you find our work useful, please consider citing:
-```
-@inproceedings{Hajisafi2024DynamicGNNs,
-  author    = {Arash Hajisafi and Haowen Lin and Yao-Yi Chiang and Cyrus Shahabi},
-  title     = {Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data},
-  booktitle = {Proceedings of the Pacific-Asia Conference on Knowledge Discovery and Data Mining (PAKDD'24)},
-  year      = {2024}
-}
-```
+NeuroGNN captures the dynamic interplay between EEG electrode locations and the semantics of their corresponding brain regions, leveraging the intricate relationships governed by each brain region's distinct cognitive functions and sensory processing. This multifaceted approach allows for a comprehensive understanding of brain activity, leading to improved precision in seizure detection and classification.
+
+<p align="center">
+  <img src="figure/neurognn-graph-construction.jpg" alt="NeuroGNN Framework Overview">
+  <br>
+  <em>Figure 1: NeuroGNN Graph Construction - Fusing spatial, temporal, semantic, and taxonomic correlations.</em>
+</p>
+
+<p align="center">
+  <img src="figure/neurognn-prediction.jpg" alt="Seizure Detection & Classification Using NeuroGNN">
+  <br>
+  <em>Figure 2: Seizure Detection & Classification Using NeuroGNN.</em>
+</p>
+
+
+The `constants.py` file contains important descriptions and mappings, including the textual descriptions for brain regions and Brodmann areas used to generate semantic embeddings, and the mapping from EEG electrodes to these areas and regions. Our paper provides further details on how these elements are utilized within the NeuroGNN framework.
+
 ## Acknowledgments
 
 This project is forked from the repository of "Self-Supervised Graph Neural Networks for Improved Electroencephalographic Seizure Analysis" by Siyi Tang et al. We reuse portions of their code, including pre-processing scripts, training loops, and evaluation codes. Additionally, the sections of this documentation related to dataset preparation and preprocessing are based on their comprehensive documentation. Check out their [original work](https://github.com/tsy935/eeg-gnn-ssl), licensed under the MIT License.
@@ -112,6 +120,31 @@ To fine-tune seizure detection/seizure type classification models from self-supe
 
 ### Baselines
 Example scripts to run baseline models are provided in `baseline_scripts`.
+
+## Model Details
+
+Our NeuroGNN framework incorporates semantic embeddings to enhance the interpretation of EEG data, leveraging textual descriptions for brain regions and Brodmann areas. The model utilizes these semantic embeddings to better understand the spatial and functional aspects of brain activity captured by EEG electrodes.
+
+### Semantic Embeddings and Mapping
+
+- **Textual Descriptions**: We use detailed textual descriptions for various brain regions and Brodmann areas to generate semantic embeddings. These embeddings help the model in understanding the functional significance of different brain areas involved in seizure activity.
+
+- **EEG Electrode Mapping**: The mapping from EEG electrodes to specific Brodmann areas and brain regions is a crucial aspect of our model. This mapping allows NeuroGNN to relate electrode data to specific functional areas of the brain, enhancing the model's ability to detect and classify seizure activity based on spatial and semantic information.
+
+For more details on the semantic embeddings and EEG electrode mappings, please refer to the `constants.py` file in our repository. This file contains the necessary mappings and descriptions used by the model to generate semantic embeddings and relate EEG data to specific brain areas.
+
+
+## Citation
+
+If you find our work useful, please consider citing:
+```
+@inproceedings{Hajisafi2024DynamicGNNs,
+  author    = {Arash Hajisafi and Haowen Lin and Yao-Yi Chiang and Cyrus Shahabi},
+  title     = {Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data},
+  booktitle = {Proceedings of the Pacific-Asia Conference on Knowledge Discovery and Data Mining (PAKDD'24)},
+  year      = {2024}
+}
+```
 
 ## License
 
