@@ -28,7 +28,7 @@ def main(args):
 
     # Get device
     args.cuda = torch.cuda.is_available()
-    device = "cuda" if args.device == 'cuda' else "cpu"
+    device = "cuda" if args.cuda else "cpu"
 
     # Set random seed
     utils.seed_torch(seed=args.rand_seed)

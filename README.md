@@ -118,22 +118,6 @@ To fine-tune seizure detection/seizure type classification models from self-supe
 --fine_tune --load_model_path <pretrained-model-checkpoint>
 ```
 
-### Baselines
-Example scripts to run baseline models are provided in `baseline_scripts`.
-
-## Model Details
-
-Our NeuroGNN framework incorporates semantic embeddings to enhance the interpretation of EEG data, leveraging textual descriptions for brain regions and Brodmann areas. The model utilizes these semantic embeddings to better understand the spatial and functional aspects of brain activity captured by EEG electrodes.
-
-### Semantic Embeddings and Mapping
-
-- **Textual Descriptions**: We use detailed textual descriptions for various brain regions and Brodmann areas to generate semantic embeddings. These embeddings help the model in understanding the functional significance of different brain areas involved in seizure activity.
-
-- **EEG Electrode Mapping**: The mapping from EEG electrodes to specific Brodmann areas and brain regions is a crucial aspect of our model. This mapping allows NeuroGNN to relate electrode data to specific functional areas of the brain, enhancing the model's ability to detect and classify seizure activity based on spatial and semantic information.
-
-For more details on the semantic embeddings and EEG electrode mappings, please refer to the `constants.py` file in our repository. This file contains the necessary mappings and descriptions used by the model to generate semantic embeddings and relate EEG data to specific brain areas.
-
-
 ## Citation
 
 If you find our work useful, please consider citing:
