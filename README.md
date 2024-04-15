@@ -2,6 +2,21 @@
 
 This repository hosts the implementation of NeuroGNN, a dynamic Graph Neural Network (GNN) framework introduced in our paper "Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data", accepted at PAKDD '24. Our framework is designed to enhance seizure detection and classification through the capture of EEG data's spatial, temporal, semantic, and taxonomic correlations.
 
+## Table of Contents
+- [NeuroGNN Overview](#neurognn-overview)
+- [Installation](#installation)
+- [Data](#data)
+- [Data Preprocessing](#data-preprocessing)
+- [Training](#training)
+  - [Seizure Detection](#seizure-detection)
+  - [Seizure Type Classification](#seizure-type-classification)
+  - [Self-Supervised Pre-Training](#self-supervised-pre-training)
+  - [Fine-Tuning](#fine-tuning-for-seizure-detection--seizure-type-classification)
+- [Pretrained Models](#pretrained-models)
+- [Citation](#citation)
+- [License](#license)
+
+
 ## NeuroGNN Overview
 
 NeuroGNN captures the dynamic interplay between EEG electrode locations and the semantics of their corresponding brain regions, leveraging the intricate relationships governed by each brain region's distinct cognitive functions and sensory processing. This multifaceted approach allows for a comprehensive understanding of brain activity, leading to improved precision in seizure detection and classification.
@@ -117,6 +132,11 @@ To fine-tune seizure detection/seizure type classification models from self-supe
 ```bash
 --fine_tune --load_model_path <pretrained-model-checkpoint>
 ```
+
+## Pretrained Models
+
+We provide pretrained checkpoints for seizure detection, classification, and self-supervised learning tasks. These models are available in the [`neurognn_checkpoints`](neurognn_checkpoints) directory of our repository. You can leverage these models to kickstart your research or applications related to EEG data analysis.
+
 
 ## Citation
 
