@@ -1,6 +1,13 @@
 # Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data
 
+Arash Hajisafi, Haowen Lin, Yao-Yi Chiang, and Cyrus Shahabi. "Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data." In *Pacific-Asia Conference on Knowledge Discovery and Data Mining*, pp. 207-220. Singapore: Springer Nature Singapore, 2024. https://link.springer.com/chapter/10.1007/978-981-97-2238-9_16
+___
+
+
 This repository hosts the implementation of NeuroGNN, a dynamic Graph Neural Network (GNN) framework introduced in our paper "Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data", accepted at PAKDD '24. Our framework is designed to enhance seizure detection and classification through the capture of EEG data's spatial, temporal, semantic, and taxonomic correlations.
+
+
+
 
 ## Table of Contents
 - [NeuroGNN Overview](#neurognn-overview)
@@ -142,11 +149,13 @@ We provide pretrained checkpoints for seizure detection, classification, and sel
 
 If you find our work useful, please consider citing:
 ```
-@inproceedings{Hajisafi2024DynamicGNNs,
-  author    = {Arash Hajisafi and Haowen Lin and Yao-Yi Chiang and Cyrus Shahabi},
-  title     = {Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data},
-  booktitle = {Proceedings of the Pacific-Asia Conference on Knowledge Discovery and Data Mining (PAKDD'24)},
-  year      = {2024}
+@inproceedings{hajisafi2024dynamic,
+  title         =  {Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data},
+  author        =  {Hajisafi, Arash and Lin, Haowen and Chiang, Yao-Yi and Shahabi, Cyrus},
+  booktitle     =  {Pacific-Asia Conference on Knowledge Discovery and Data Mining},
+  pages         =  {207--220},
+  year          =  {2024},
+  organization  =  {Springer}
 }
 ```
 
