@@ -1,6 +1,6 @@
 # Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data
 
-Arash Hajisafi, Haowen Lin, Yao-Yi Chiang, and Cyrus Shahabi. "Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data." In *Pacific-Asia Conference on Knowledge Discovery and Data Mining*, pp. 207-220. Singapore: Springer Nature Singapore, 2024. https://link.springer.com/chapter/10.1007/978-981-97-2238-9_16
+Arash Hajisafi, Haowen Lin, Yao-Yi Chiang, and Cyrus Shahabi. "Dynamic GNNs for Precise Seizure Detection and Classification from EEG Data." In *Pacific-Asia Conference on Knowledge Discovery and Data Mining*, pp. 207-220. Singapore: Springer Nature Singapore, 2024. https://arxiv.org/abs/2405.09568
 ___
 
 
