@@ -72,7 +72,7 @@ pip install -r requirements.txt
 
 ## Data
 
-We use the Temple University Seizure Corpus (TUSZ) v1.5.2 in this study. The TUSZ dataset is publicly available [here](https://www.kaggle.com/datasets/psyryuvok/the-tuh-eeg-seizure-corpus-tusz-v152). After you have registered and downloaded the data, you will see a subdirectory called `edf` which contains all the EEG signals and their associated labels. We use the EEG files in the `edf/dev` subfolder as our held-out test set. We further split the EEG files in the `edf/train` subfolder into train and validation sets by patients. See folders `./data/file_markers_detection`, `./data/file_markers_classification`, and `./data/file_markers_ssl` for details.
+We use the Temple University Seizure Corpus (TUSZ) v1.5.2 in this study. The TUSZ dataset can be accessed through [here](https://isip.piconepress.com/projects/nedc/html/tuh_eeg/), where you need to sign up through the official data provider's website. After you have registered and downloaded the data, you will see a subdirectory called `edf` which contains all the EEG signals and their associated labels. We use the EEG files in the `edf/dev` subfolder as our held-out test set. We further split the EEG files in the `edf/train` subfolder into train and validation sets by patients. See folders `./data/file_markers_detection`, `./data/file_markers_classification`, and `./data/file_markers_ssl` for details.
 
 In this study, we exclude five patients from the test set who exist in both the official TUSZ train and test sets. You can find the list of excluded patients' IDs in `./data_tusz/excluded_test_patients.txt`.
 
